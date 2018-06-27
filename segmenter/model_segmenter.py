@@ -279,12 +279,12 @@ class segmenter:
                 y_gt_disp = tf.expand_dims(y_gt, axis=-1)
                 x_disp = x
 
-            sum_y = tf.summary.image('%s_predicted_mask' % prefix, tf_utils.put_kernels_on_grid(
+            sum_y = tf.summary.image('%s_mask_predicted' % prefix, tf_utils.put_kernels_on_grid(
                 y_disp,
                 batch_size=self.exp_config.batch_size,
                 mode='mask',
                 nlabels=self.exp_config.nlabels))
-            sum_y_gt = tf.summary.image('%s_groundtruth_mask' % prefix, tf_utils.put_kernels_on_grid(
+            sum_y_gt = tf.summary.image('%s_mask_groundtruth' % prefix, tf_utils.put_kernels_on_grid(
                 y_gt_disp,
                 batch_size=self.exp_config.batch_size,
                 mode='mask',
@@ -312,15 +312,15 @@ class segmenter:
         self.val_error_ = tf.placeholder(tf.float32, shape=[], name='val_task_loss')
         val_error_summary = tf.summary.scalar('validation_task_loss', self.val_error_)
 
-        self.val_tot_dice_score_ = tf.placeholder(tf.float32, shape=[], name='val_tot_dice_score')
-        val_tot_dice_summary = tf.summary.scalar('validation_tot_dice_score', self.val_tot_dice_score_)
+        self.val_tot_dice_score_ = tf.placeholder(tf.float32, shape=[], name='val_dice_total_score')
+        val_tot_dice_summary = tf.summary.scalar('validation_dice_tot_score', self.val_tot_dice_score_)
 
         self.val_lbl_dice_scores = []
         val_lbl_dice_summaries = []
         for ii in range(self.nlabels):
-            curr_pl = tf.placeholder(tf.float32, shape=[], name='val_lbl_%d_dice' % ii)
+            curr_pl = tf.placeholder(tf.float32, shape=[], name='val_dice_lbl_%d' % ii)
             self.val_lbl_dice_scores.append(curr_pl)
-            val_lbl_dice_summaries.append(tf.summary.scalar('validation_lbl_%d_dice' % ii, curr_pl))
+            val_lbl_dice_summaries.append(tf.summary.scalar('validation_dice_lbl_%d' % ii, curr_pl))
 
         val_image_summary = _image_summaries('validation', self.x_pl, self.p_pl_, self.y_pl)
 
@@ -331,15 +331,15 @@ class segmenter:
         self.train_error_ = tf.placeholder(tf.float32, shape=[], name='train_task_loss')
         train_error_summary = tf.summary.scalar('training_task_loss', self.train_error_)
 
-        self.train_tot_dice_score_ = tf.placeholder(tf.float32, shape=[], name='train_tot_dice_score')
-        train_tot_dice_summary = tf.summary.scalar('train_tot_dice_score', self.train_tot_dice_score_)
+        self.train_tot_dice_score_ = tf.placeholder(tf.float32, shape=[], name='train_dice_tot_score')
+        train_tot_dice_summary = tf.summary.scalar('train_dice_tot_score', self.train_tot_dice_score_)
 
         self.train_lbl_dice_scores = []
         train_lbl_dice_summaries = []
         for ii in range(self.nlabels):
-            curr_pl = tf.placeholder(tf.float32, shape=[], name='train_lbl_%d_dice' % ii)
+            curr_pl = tf.placeholder(tf.float32, shape=[], name='train_dice_lbl_%d' % ii)
             self.train_lbl_dice_scores.append(curr_pl)
-            train_lbl_dice_summaries.append(tf.summary.scalar('train_lbl_%d_dice' % ii, curr_pl))
+            train_lbl_dice_summaries.append(tf.summary.scalar('train_dice_lbl_%d' % ii, curr_pl))
 
         train_image_summary = _image_summaries('train', self.x_pl, self.p_pl_, self.y_pl)
 

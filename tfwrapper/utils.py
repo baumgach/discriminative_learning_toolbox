@@ -122,7 +122,7 @@ def put_kernels_on_grid(images, batch_size, pad=1, min_int=None, max_int=None, *
         else:
             x_max = max_int
 
-        images = tf.cast(images, tf.float32)
+        # images = tf.cast(images, tf.float32)
         # images = (images - x_min) / (x_max - x_min)
         images -= x_min
         images /= x_max

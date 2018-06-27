@@ -3,7 +3,7 @@ import tensorflow as tf
 import os
 import config.system as sys_config
 
-experiment_name = 'synth_normalnet_xent'
+experiment_name = 'synth_normalnet_dice'
 
 # Model settings
 network = nets2D.unet2D_modified_bn
@@ -21,7 +21,7 @@ label_type = 'mask'
 
 # Cost function
 weight_decay = 0.0
-loss_type = 'crossentropy'
+loss_type = 'dice'  #'crossentropy'
 
 # Training settings
 batch_size = 30
