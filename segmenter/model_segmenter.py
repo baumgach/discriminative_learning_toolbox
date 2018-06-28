@@ -79,7 +79,8 @@ class segmenter:
         config.gpu_options.per_process_gpu_memory_fraction = 1.0
 
         # For evaluation
-        self.per_image_dice = losses.per_structure_dice(self.l_pl_, tf.one_hot(self.y_pl, depth=self.nlabels))
+        self.eval_dice_per_structure = losses.get_dice(self.l_pl_, tf.one_hot(self.y_pl, depth=self.nlabels), sum_over_labels=False)
+        self.eval_dice_per_image = losses.get_dice(self.l_pl_, tf.one_hot(self.y_pl, depth=self.nlabels), sum_over_labels=True)
 
         # Create a session for running Ops on the Graph.
         self.sess = tf.Session(config=config)
@@ -90,8 +91,12 @@ class segmenter:
 
         if self.exp_config.loss_type == 'crossentropy':
             task_loss = losses.cross_entropy_loss(logits=self.l_pl_, labels=y_for_loss)
-        elif self.exp_config.loss_type == 'dice':
-            task_loss = losses.dice_loss(logits=self.l_pl_, labels=y_for_loss)
+        elif self.exp_config.loss_type == 'dice_micro':
+            task_loss = losses.dice_loss(logits=self.l_pl_, labels=y_for_loss, mode='micro')
+        elif self.exp_config.loss_type == 'dice_macro':
+            task_loss = losses.dice_loss(logits=self.l_pl_, labels=y_for_loss, mode='macro')
+        elif self.exp_config.loss_type == 'dice_macro_robust':
+            task_loss = losses.dice_loss(logits=self.l_pl_, labels=y_for_loss, mode='macro_robust')
         else:
             raise ValueError("Unknown loss_type in exp_config: '%s'" % self.exp_config.loss_type)
 
@@ -391,47 +396,27 @@ class segmenter:
 
     def _eval_predict(self, images, labels):
 
-        prediction, loss, per_image_dice = self.sess.run([self.p_pl_, self.total_loss, self.per_image_dice],
-                                         feed_dict={self.x_pl: images,
-                                                    self.y_pl: labels,
-                                                    self.training_pl: False})
+        prediction, loss, dice_per_img_and_lbl, dice_per_img = self.sess.run([self.p_pl_,
+                                                                              self.total_loss,
+                                                                              self.eval_dice_per_structure,
+                                                                              self.eval_dice_per_image],
+                                                                             feed_dict={self.x_pl: images,
+                                                                             self.y_pl: labels,
+                                                                             self.training_pl: False})
 
-        return prediction, loss, per_image_dice
+        # We are getting per_image and per_structure dice separately because the average of per_structure
+        # will be wrong for labels that do not appear in an image.
+
+        return prediction, loss, dice_per_img_and_lbl, dice_per_img
 
 
     def _do_validation(self, data_handle, summary, tot_loss_pl, tot_dice_pl, lbl_dice_pl_list):
 
-        # ohe = OneHotEncoder(n_values=self.exp_config.nlabels)
-        #
-        # def get_per_structure_dice(y, y_gt):
-        #
-        #     y_gt_oh_shape = list(y_gt.shape) + [self.exp_config.nlabels]
-        #
-        #     y = np.round(y)
-        #     y_gt = ohe.transform(y_gt).toarray().reshape(y_gt_oh_shape)
-        #
-        #     i = y*y_gt
-        #     u = y + y_gt
-        #
-        #     if len(self.image_tensor_shape) == 5:
-        #         reduction_indices = [1,2,3]
-        #     elif len(self.image_tensor_shape) == 4:
-        #         reduction_indices = [1,2]
-        #     else:
-        #         raise ValueError('Unexpected dimensionality of input data.')
-        #
-        #     i = np.sum(i, axis=reduction_indices)
-        #     u = np.sum(u, axis=reduction_indices)
-        #
-        #     dice_per_img_per_lbl = 2*i / u
-        #     # dice_per_structure = np.mean(dice_per_img_per_lbl, axis=-1)
-        #
-        #     return dice_per_img_per_lbl
-
-
         diag_loss_ii = 0
         num_batches = 0
-        all_dice_per_structure = []
+        all_dice_per_img_and_lbl = []
+        all_dice_per_img = []
+
 
         for batch in data_handle.iterate_batches(self.exp_config.batch_size):
 
@@ -441,19 +426,23 @@ class segmenter:
             if y.shape[0] < self.exp_config.batch_size:
                 continue
 
-            c_d_preds, c_d_loss, per_image_per_structure_dice = self._eval_predict(x, y)
+            c_d_preds, c_d_loss, dice_per_img_and_lbl, dice_per_img = self._eval_predict(x, y)
 
             num_batches += 1
             diag_loss_ii += c_d_loss
 
-            all_dice_per_structure.append(per_image_per_structure_dice)
+            all_dice_per_img_and_lbl.append(dice_per_img_and_lbl)
+            all_dice_per_img.append(dice_per_img)
 
         avg_loss = (diag_loss_ii / num_batches)
 
-        dice_array = np.asarray(all_dice_per_structure).reshape((-1, self.nlabels))
+        dice_per_lbl_array = np.asarray(all_dice_per_img_and_lbl).reshape((-1, self.nlabels))
 
-        per_structure_dice = np.mean(dice_array, axis=0)
-        avg_dice = np.mean(per_structure_dice)
+        per_structure_dice = np.mean(dice_per_lbl_array, axis=0)
+
+        dice_array = np.asarray(all_dice_per_img).flatten()
+
+        avg_dice = np.mean(dice_array)
 
         ### Update Tensorboard
         x, y = data_handle.next_batch(self.exp_config.batch_size)

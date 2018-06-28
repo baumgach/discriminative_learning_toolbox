@@ -3,207 +3,105 @@
 
 import tensorflow as tf
 from tfwrapper import layers
+from tfwrapper import normalisation as tfnorm
 
 
-def normalnet2D(x, nlabels, training, scope_reuse=False):
+def simplenet2D(x, nlabels, training, n0=32, norm=tfnorm.batch_norm, scope_reuse=False):
 
     with tf.variable_scope('classifier') as scope:
 
         if scope_reuse:
             scope.reuse_variables()
 
-        init_filters = 32
+        conv1_1 = layers.conv2D(x, 'conv1_1', num_filters=n0, training=training, normalisation=norm, add_bias=False)
 
-        conv1_1 = layers.conv2D_layer_bn(x, 'conv1_1', num_filters=init_filters, training=training)
+        pool1 = layers.maxpool2D(conv1_1)
 
-        pool1 = layers.maxpool2D_layer(conv1_1)
+        conv2_1 = layers.conv2D(pool1, 'conv2_1', num_filters=n0*2, training=training, normalisation=norm, add_bias=False)
 
-        conv2_1 = layers.conv2D_layer_bn(pool1, 'conv2_1', num_filters=init_filters*2, training=training)
+        pool2 = layers.maxpool2D(conv2_1)
 
-        pool2 = layers.maxpool2D_layer(conv2_1)
+        conv3_1 = layers.conv2D(pool2, 'conv3_1', num_filters=n0*4, training=training, normalisation=norm, add_bias=False)
+        conv3_2 = layers.conv2D(conv3_1, 'conv3_2', num_filters=n0*4, training=training, normalisation=norm, add_bias=False)
 
-        conv3_1 = layers.conv2D_layer_bn(pool2, 'conv3_1', num_filters=init_filters*4, training=training)
-        conv3_2 = layers.conv2D_layer_bn(conv3_1, 'conv3_2', num_filters=init_filters*4, training=training)
+        pool3 = layers.maxpool2D(conv3_2)
 
-        pool3 = layers.maxpool2D_layer(conv3_2)
+        conv4_1 = layers.conv2D(pool3, 'conv4_1', num_filters=n0*8, training=training, normalisation=norm, add_bias=False)
+        conv4_2 = layers.conv2D(conv4_1, 'conv4_2', num_filters=n0*8, training=training, normalisation=norm, add_bias=False)
 
-        conv4_1 = layers.conv2D_layer_bn(pool3, 'conv4_1', num_filters=init_filters*8, training=training)
-        conv4_2 = layers.conv2D_layer_bn(conv4_1, 'conv4_2', num_filters=init_filters*8, training=training)
+        pool4 = layers.maxpool2D(conv4_2)
 
-        pool4 = layers.maxpool2D_layer(conv4_2)
+        conv5_1 = layers.conv2D(pool4, 'conv5_1', num_filters=n0*16, training=training, normalisation=norm, add_bias=False)
+        conv5_2 = layers.conv2D(conv5_1, 'conv5_2', num_filters=n0*16, training=training, normalisation=norm, add_bias=False)
 
-        conv5_1 = layers.conv2D_layer_bn(pool4, 'conv5_1', num_filters=init_filters*16, training=training)
-        conv5_2 = layers.conv2D_layer_bn(conv5_1, 'conv5_2', num_filters=init_filters*16, training=training)
+        convD_1 = layers.conv2D(conv5_2, 'convD_1', num_filters=n0*16, training=training, normalisation=norm, add_bias=False)
 
-        convD_1 = layers.conv2D_layer_bn(conv5_2, 'convD_1', num_filters=init_filters*16, training=training)
+        dense1 = layers.dense_layer(convD_1, 'dense1', hidden_units=n0*16, training=training, normalisation=norm, add_bias=False)
 
-        dense1 = layers.dense_layer_bn(convD_1, 'dense1', hidden_units=init_filters*16, training=training)
-
-        logits = layers.dense_layer_bn(dense1, 'dense2', hidden_units=nlabels, training=training, activation=tf.identity)
+        logits = layers.dense_layer(dense1, 'dense2', hidden_units=nlabels, training=training, activation=tf.identity, normalisation=norm, add_bias=False)
 
 
     return logits
 
 
-def rebuttalnet2D(x, nlabels, training, scope_reuse=False):
+
+def vgg_base(x, nlabels, training, n0=64, conv_per_level=(2,2,2,2), norm=tfnorm.batch_norm, scope_reuse=False):
 
     with tf.variable_scope('classifier') as scope:
 
         if scope_reuse:
             scope.reuse_variables()
 
-        init_filters = 32
+        net = x
 
-        conv1_1 = layers.conv2D_layer_bn(x, 'conv1_1', num_filters=init_filters, training=training)
+        for ii, num_conv in enumerate(conv_per_level):
+            for jj in range(num_conv):
+                num_filt = n0*(2**ii) if ii <= 3 else  n0*(2**3)  # stop increasing filter number after 3rd level
+                net = layers.conv2D(net, 'conv_%d_%d' % (ii,jj), num_filters=num_filt, training=training, normalisation=norm, add_bias=False)
+            net = layers.maxpool2D(net)
 
-        pool1 = layers.maxpool2D_layer(conv1_1)
+        net = layers.dense_layer(net, 'dense1', hidden_units=n0*64, training=training, normalisation=norm, add_bias=False)
+        net = layers.dense_layer(net, 'dense2', hidden_units=n0*64, training=training, normalisation=norm, add_bias=False)
+        output = layers.dense_layer(net, 'dense3', hidden_units=nlabels, training=training, activation=tf.identity,  normalisation=norm, add_bias=False)
 
-        conv2_1 = layers.conv2D_layer_bn(pool1, 'conv2_1', num_filters=init_filters*2, training=training)
+    return output
 
-        pool2 = layers.maxpool2D_layer(conv2_1)
-
-        conv3_1 = layers.conv2D_layer_bn(pool2, 'conv3_1', num_filters=init_filters*4, training=training)
-        conv3_2 = layers.conv2D_layer_bn(conv3_1, 'conv3_2', num_filters=init_filters*4, training=training)
-
-        pool3 = layers.maxpool2D_layer(conv3_2)
-
-        conv4_1 = layers.conv2D_layer_bn(pool3, 'conv4_1', num_filters=init_filters*8, training=training)
-        conv4_2 = layers.conv2D_layer_bn(conv4_1, 'conv4_2', num_filters=init_filters*8, training=training)
-
-        pool4 = layers.maxpool2D_layer(conv4_2)
-
-        conv5_1 = layers.conv2D_layer_bn(pool4, 'conv5_1', num_filters=init_filters*16, training=training)
-        conv5_2 = layers.conv2D_layer_bn(conv5_1, 'conv5_2', num_filters=init_filters*16, training=training)
-
-        convD_1 = layers.conv2D_layer_bn(conv5_2, 'convD_1', num_filters=init_filters*16, training=training)
-
-        avg_pool = layers.averagepool2D_layer(convD_1, name='avg_pool')
-
-        logits = layers.dense_layer_bn(avg_pool, 'dense2', hidden_units=nlabels, training=training, activation=tf.identity)
+def vgg16(x, nlabels, training, n0=64, norm=tfnorm.batch_norm, scope_reuse=False):
+    return vgg_base(x, nlabels, training, n0=n0, conv_per_level=(2, 2, 3, 3, 3), norm=norm, scope_reuse=scope_reuse)
 
 
-    return logits
+def vgg19(x, nlabels, training, n0=64, norm=tfnorm.batch_norm, scope_reuse=False):
+    return vgg_base(x, nlabels, training, n0=n0, conv_per_level=(2, 2, 4, 4, 4), norm=norm, scope_reuse=scope_reuse)
 
 
-def VGG16(x, nlabels, training, scope_reuse=False):
+def CAM_net(x, nlabels, training, n0=32, norm=tfnorm.batch_norm, scope_reuse=False):
 
     with tf.variable_scope('classifier') as scope:
 
         if scope_reuse:
             scope.reuse_variables()
 
-        init_filters = 64
+        conv1_1 = layers.conv2D(x, 'conv1_1', num_filters=n0, training=training, normalisation=norm, add_bias=False)
 
-        conv1_1 = layers.conv2D_layer_bn(x, 'conv1_1', num_filters=init_filters, training=training)
-        conv1_2 = layers.conv2D_layer_bn(conv1_1, 'conv1_2', num_filters=init_filters, training=training)
+        pool1 = layers.maxpool2D(conv1_1)
 
-        pool1 = layers.maxpool2D_layer(conv1_2)
+        conv2_1 = layers.conv2D(pool1, 'conv2_1', num_filters=n0*2, training=training, normalisation=norm, add_bias=False)
 
-        conv2_1 = layers.conv2D_layer_bn(pool1, 'conv2_1', num_filters=init_filters*2, training=training)
-        conv2_2 = layers.conv2D_layer_bn(conv2_1, 'conv2_2', num_filters=init_filters*2, training=training)
+        pool2 = layers.maxpool2D(conv2_1)
 
-        pool2 = layers.maxpool2D_layer(conv2_2)
+        conv3_1 = layers.conv2D(pool2, 'conv3_1', num_filters=n0*4, training=training, normalisation=norm, add_bias=False)
+        conv3_2 = layers.conv2D(conv3_1, 'conv3_2', num_filters=n0*4, training=training, normalisation=norm, add_bias=False)
 
-        conv3_1 = layers.conv2D_layer_bn(pool2, 'conv3_1', num_filters=init_filters*4, training=training)
-        conv3_2 = layers.conv2D_layer_bn(conv3_1, 'conv3_2', num_filters=init_filters*4, training=training)
-        conv3_3 = layers.conv2D_layer_bn(conv3_2, 'conv3_3', num_filters=init_filters*4, training=training)
+        conv4_1 = layers.conv2D(conv3_2, 'conv4_1', num_filters=n0*8, training=training, normalisation=norm, add_bias=False)
+        conv4_2 = layers.conv2D(conv4_1, 'conv4_2', num_filters=n0*8, training=training, normalisation=norm, add_bias=False)
 
-        pool3 = layers.maxpool2D_layer(conv3_3)
+        conv5_1 = layers.conv2D(conv4_2, 'conv5_1', num_filters=n0*16, training=training, normalisation=norm, add_bias=False)
+        conv5_2 = layers.conv2D(conv5_1, 'conv5_2', num_filters=n0*16, training=training, normalisation=norm, add_bias=False)
 
-        conv4_1 = layers.conv2D_layer_bn(pool3, 'conv4_1', num_filters=init_filters*8, training=training)
-        conv4_2 = layers.conv2D_layer_bn(conv4_1, 'conv4_2', num_filters=init_filters*8, training=training)
-        conv4_3 = layers.conv2D_layer_bn(conv4_2, 'conv4_3', num_filters=init_filters*8, training=training)
+        convD_1 = layers.conv2D(conv5_2, 'feature_maps', num_filters=n0*16, training=training, normalisation=norm, add_bias=False)
 
-        pool4 = layers.maxpool2D_layer(conv4_3)
+        fm_averages = layers.global_averagepool2D(convD_1, name='fm_averages')
 
-        conv5_1 = layers.conv2D_layer_bn(pool4, 'conv5_1', num_filters=init_filters*8, training=training)
-        conv5_2 = layers.conv2D_layer_bn(conv5_1, 'conv5_2', num_filters=init_filters*8, training=training)
-        conv5_3 = layers.conv2D_layer_bn(conv5_2, 'conv5_3', num_filters=init_filters*8, training=training)
-
-        pool5 = layers.maxpool2D_layer(conv5_3)
-
-        dense1 = layers.dense_layer_bn(pool5, 'dense1', hidden_units=init_filters*64, training=training)
-        dense2 = layers.dense_layer_bn(dense1, 'dense2', hidden_units=init_filters*64, training=training)
-
-        logits = layers.dense_layer_bn(dense2, 'dense3', hidden_units=nlabels, training=training, activation=tf.identity)
-
-
-    return logits
-
-
-def normalnet_deeper2D(x, nlabels, training, scope_reuse=False):
-
-    with tf.variable_scope('classifier') as scope:
-
-        if scope_reuse:
-            scope.reuse_variables()
-
-        init_filters = 32
-
-        conv1_1 = layers.conv2D_layer_bn(x, 'conv1_1', num_filters=init_filters, training=training)
-
-        pool1 = layers.maxpool2D_layer(conv1_1)
-
-        conv2_1 = layers.conv2D_layer_bn(pool1, 'conv2_1', num_filters=init_filters*2, training=training)
-
-        pool2 = layers.maxpool2D_layer(conv2_1)
-
-        conv3_1 = layers.conv2D_layer_bn(pool2, 'conv3_1', num_filters=init_filters*4, training=training)
-        conv3_2 = layers.conv2D_layer_bn(conv3_1, 'conv3_2', num_filters=init_filters*4, training=training)
-
-        pool3 = layers.maxpool2D_layer(conv3_2)
-
-        conv4_1 = layers.conv2D_layer_bn(pool3, 'conv4_1', num_filters=init_filters*8, training=training)
-        conv4_2 = layers.conv2D_layer_bn(conv4_1, 'conv4_2', num_filters=init_filters*8, training=training)
-
-        pool4 = layers.maxpool2D_layer(conv4_2)
-
-        conv5_1 = layers.conv2D_layer_bn(pool4, 'conv5_1', num_filters=init_filters*16, training=training)
-        conv5_2 = layers.conv2D_layer_bn(conv5_1, 'conv5_2', num_filters=init_filters*16, training=training)
-
-        pool5 = layers.maxpool2D_layer(conv5_2)
-
-        conv6_1 = layers.conv2D_layer_bn(pool5, 'conv6_1', num_filters=init_filters*16, training=training)
-        conv6_2 = layers.conv2D_layer_bn(conv6_1, 'conv6_2', num_filters=init_filters*16, training=training)
-
-        dense1 = layers.dense_layer_bn(conv6_2, 'dense1', hidden_units=init_filters*16, training=training)
-
-        logits = layers.dense_layer_bn(dense1, 'dense2', hidden_units=nlabels, training=training, activation=tf.identity)
-
-
-    return logits
-
-
-def CAM_net2D(x, nlabels, training, scope_reuse=False):
-
-    with tf.variable_scope('classifier') as scope:
-
-        if scope_reuse:
-            scope.reuse_variables()
-
-        init_filters = 32
-
-        conv1_1 = layers.conv2D_layer_bn(x, 'conv1_1', num_filters=init_filters, training=training)
-
-        pool1 = layers.maxpool2D_layer(conv1_1)
-
-        conv2_1 = layers.conv2D_layer_bn(pool1, 'conv2_1', num_filters=init_filters*2, training=training)
-
-        pool2 = layers.maxpool2D_layer(conv2_1)
-
-        conv3_1 = layers.conv2D_layer_bn(pool2, 'conv3_1', num_filters=init_filters*4, training=training)
-        conv3_2 = layers.conv2D_layer_bn(conv3_1, 'conv3_2', num_filters=init_filters*4, training=training)
-
-        conv4_1 = layers.conv2D_layer_bn(conv3_2, 'conv4_1', num_filters=init_filters*8, training=training)
-        conv4_2 = layers.conv2D_layer_bn(conv4_1, 'conv4_2', num_filters=init_filters*8, training=training)
-
-        conv5_1 = layers.conv2D_layer_bn(conv4_2, 'conv5_1', num_filters=init_filters*16, training=training)
-        conv5_2 = layers.conv2D_layer_bn(conv5_1, 'conv5_2', num_filters=init_filters*16, training=training)
-
-        convD_1 = layers.conv2D_layer_bn(conv5_2, 'feature_maps', num_filters=init_filters*16, training=training)
-
-        fm_averages = layers.averagepool2D_layer(convD_1, name='fm_averages')
-
-        logits = layers.dense_layer(fm_averages, 'weight_layer', hidden_units=nlabels, activation=tf.identity, add_bias=False)
+        logits = layers.dense_layer(fm_averages, 'weight_layer', hidden_units=nlabels, activation=tf.identity, norm=tf.identity, add_bias=False)
 
     return logits

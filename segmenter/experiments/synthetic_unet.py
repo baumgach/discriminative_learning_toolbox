@@ -3,10 +3,10 @@ import tensorflow as tf
 import os
 import config.system as sys_config
 
-experiment_name = 'synth_normalnet_dice'
+experiment_name = 'synth_residualunet_xent'
 
 # Model settings
-network = nets2D.unet2D_modified_bn
+network = nets2D.residual_unet2D
 
 # Data settings
 data_identifier = 'synthetic'
@@ -21,7 +21,7 @@ label_type = 'mask'
 
 # Cost function
 weight_decay = 0.0
-loss_type = 'dice'  #'crossentropy'
+loss_type = 'crossentropy'  # 'dice_micro'/'dice_macro'/'dice_macro_robust'/'crossentropy'
 
 # Training settings
 batch_size = 30
@@ -38,5 +38,5 @@ momentum = None
 # Rarely changed settings
 use_data_fraction = False  # Should normally be False
 max_iterations = 1000000
-train_eval_frequency = 100
-val_eval_frequency = 100
+train_eval_frequency = 50
+val_eval_frequency = 50

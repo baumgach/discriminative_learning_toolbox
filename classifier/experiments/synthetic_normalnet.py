@@ -6,7 +6,7 @@ import config.system as sys_config
 experiment_name = 'synth_normalnet'
 
 # Model settings
-classifier_net = nets2D.normalnet2D
+classifier_net = nets2D.simplenet2D
 
 # Data settings
 data_identifier = 'synthetic'

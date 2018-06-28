@@ -7,6 +7,10 @@ import numpy as np
 import math
 import glob
 import os
+from tensorflow.contrib.layers import variance_scaling_initializer, xavier_initializer
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
 def flatten(tensor):
     '''
@@ -202,54 +206,98 @@ def get_latest_model_checkpoint_path(folder, name):
     return os.path.join(folder, name + '-' + str(latest_iteration))
 
 
-def total_variation(images, beta=1.0, mode='2D'):
 
-    ndims = images.get_shape().ndims
+def get_weight_variable(shape, name=None, type='xavier_uniform', regularize=True, **kwargs):
 
-    if mode == '3D':
+    if 'init_weights' in kwargs and kwargs['init_weights'] is not None:
+        type = 'pretrained'
+        logging.info('Using pretrained weights for layer: %s' % name)
 
-        if ndims == 4:
-            # The input is a single image with shape [height, width, channels].
-            pixel_dif1 = images[1:, :-1, :-1, :] - images[:-1, :-1, :-1, :]
-            pixel_dif2 = images[:-1, 1:, :-1, :] - images[:-1, :-1, :-1, :]
-            pixel_dif3 = images[:-1, :-1, 1:, :] - images[:-1, :-1, :-1, :]
-            sum_axis = None
-        elif ndims == 5:
-            pixel_dif1 = images[:, 1:, :-1, :-1, :] - images[:, :-1, :-1, :-1, :]
-            pixel_dif2 = images[:, :-1, 1:, :-1, :] - images[:, :-1, :-1, :-1, :]
-            pixel_dif3 = images[:, :-1, :-1, 1:, :] - images[:, :-1, :-1, :-1, :]
-            sum_axis = [1, 2, 3, 4]
-        else:
-            raise ValueError('\'images\' must be either 3 or 4-dimensional.')
-
-        a = tf.square(tf.abs(pixel_dif1))
-        b = tf.square(tf.abs(pixel_dif2))
-        c = tf.square(tf.abs(pixel_dif3))
-
-        tot_var = tf.reduce_sum(tf.pow(a + b + c, beta / 2.0), axis=sum_axis)
-
-        return tot_var
-
-    if mode == '2D':
-        if ndims == 3:
-            # The input is a single image with shape [height, width, channels].
-            pixel_dif1 = images[1:, :-1, :] - images[:-1, :-1, :]
-            pixel_dif2 = images[:-1, 1:, :] - images[:-1, :-1, :]
-            sum_axis = None
-        elif ndims == 4:
-            pixel_dif1 = images[:, 1:, :-1, :] - images[:, :-1, :-1, :]
-            pixel_dif2 = images[:, :-1, 1:, :] - images[:, :-1, :-1, :]
-            sum_axis = [1, 2, 3]
-        else:
-            raise ValueError('\'images\' must be either 3 or 4-dimensional.')
-
-        a = tf.square(tf.abs(pixel_dif1))
-        b = tf.square(tf.abs(pixel_dif2))
-
-        tot_var = tf.reduce_sum(tf.pow(a + b, beta / 2.0), axis=sum_axis)
-
-        return tot_var
-
+    initialise_from_constant = False
+    if type == 'xavier_uniform':
+        initial = xavier_initializer(uniform=True, dtype=tf.float32)
+    elif type == 'xavier_normal':
+        initial = xavier_initializer(uniform=False, dtype=tf.float32)
+    elif type == 'he_normal':
+        initial = variance_scaling_initializer(uniform=False, factor=2.0, mode='FAN_IN', dtype=tf.float32)
+    elif type == 'he_uniform':
+        initial = variance_scaling_initializer(uniform=True, factor=2.0, mode='FAN_IN', dtype=tf.float32)
+    elif type == 'caffe_uniform':
+        initial = variance_scaling_initializer(uniform=True, factor=1.0, mode='FAN_IN', dtype=tf.float32)
+    elif type == 'simple':
+        stddev = kwargs.get('stddev', 0.02)
+        initial = tf.truncated_normal(shape, stddev=stddev, dtype=tf.float32)
+        initialise_from_constant = True
+    elif type == 'bilinear':
+        weights = _bilinear_upsample_weights(shape)
+        initial = tf.constant(weights, shape=shape, dtype=tf.float32)
+        initialise_from_constant = True
+    elif type == 'pretrained':
+        initial = kwargs.get('init_weights')
+        initialise_from_constant = True
+        logging.info('Using pretrained weights for layer: %s' % name)
     else:
+        raise ValueError('Unknown initialisation requested: %s' % type)
 
-        raise ValueError('Mode must be 2D or 3D')
+    if name is None:  # This keeps to option open to use unnamed Variables
+        weight = tf.Variable(initial)
+    else:
+        if initialise_from_constant:
+            weight = tf.get_variable(name, initializer=initial)
+        else:
+            weight = tf.get_variable(name, shape=shape, initializer=initial)
+
+    if regularize:
+        tf.add_to_collection('weight_variables', weight)
+
+    return weight
+
+
+
+def get_bias_variable(shape, name=None, init_value=0.0, **kwargs):
+
+    if 'init_biases' in kwargs and kwargs['init_biases'] is not None:
+        initial = kwargs['init_biases']
+        logging.info('Using pretrained weights for layer: %s' % name)
+    else:
+        initial = tf.constant(init_value, shape=shape, dtype=tf.float32)
+    if name is None:
+        return tf.Variable(initial)
+    else:
+        return tf.get_variable(name, initializer=initial)
+
+
+
+def _upsample_filt(size):
+    '''
+    Make a nets2D bilinear kernel suitable for upsampling of the given (h, w) size.
+    '''
+    factor = (size + 1) // 2
+    if size % 2 == 1:
+        center = factor - 1
+    else:
+        center = factor - 0.5
+    og = np.ogrid[:size, :size]
+    return (1 - abs(og[0] - center) / factor) * \
+           (1 - abs(og[1] - center) / factor)
+
+
+def _bilinear_upsample_weights(shape):
+    '''
+    Create weights matrix for transposed convolution with bilinear filter
+    initialization.
+    '''
+
+    if not shape[0] == shape[1]: raise ValueError('kernel is not square')
+    if not shape[2] == shape[3]: raise ValueError('input and output featuremaps must have the same size')
+
+    kernel_size = shape[0]
+    num_feature_maps = shape[2]
+
+    weights = np.zeros(shape, dtype=np.float32)
+    upsample_kernel = _upsample_filt(kernel_size)
+
+    for i in range(num_feature_maps):
+        weights[:, :, i, i] = upsample_kernel
+
+    return weights
