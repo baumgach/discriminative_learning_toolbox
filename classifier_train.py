@@ -1,5 +1,6 @@
 # Authors:
 # Christian F. Baumgartner (c.f.baumgartner@gmail.com)
+from data.data_switch import data_switch
 
 from classifier.model_classifier import classifier
 
@@ -7,17 +8,13 @@ def main():
 
     # Select experiment below
 
-    from classifier.experiments import synthetic_normalnet as exp_config
+    # from classifier.experiments import synthetic_CAM as exp_config
+    # from classifier.experiments import synthetic_vgg16 as exp_config
+    from classifier.experiments import synthetic_resnet34 as exp_config
     # from classifier.experiments import adni_experiment as exp_config
 
     # Get Data
-    if exp_config.data_identifier == 'synthetic':
-        from data.synthetic_data import synthetic_data as data_loader
-    elif exp_config.data_identifier == 'adni':
-        from data.adni_data import adni_data as data_loader
-    else:
-        raise ValueError('Unknown data identifier: %s' % exp_config.data_identifier)
-
+    data_loader = data_switch(exp_config.data_identifier)
     data = data_loader(exp_config)
 
     # Build VAGAN model

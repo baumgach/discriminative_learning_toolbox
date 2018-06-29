@@ -14,19 +14,14 @@ import config.system as sys_config
 from classifier.model_classifier import classifier
 
 import logging
+from data.data_switch import data_switch
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
 
 def main(model_path, exp_config):
 
     # Get Data
-    if exp_config.data_identifier == 'synthetic':
-        from data.synthetic_data import synthetic_data as data_loader
-    elif exp_config.data_identifier == 'adni':
-        from data.adni_data import adni_data as data_loader
-    else:
-        raise ValueError('Unknown data identifier: %s' % exp_config.data_identifier)
-
+    data_loader = data_switch(exp_config.data_identifier)
     data = data_loader(exp_config)
 
     # Make and restore vagan model
@@ -47,11 +42,11 @@ def main(model_path, exp_config):
         gt_list += list(y)
 
 
-    print(pred_list)
-    print(gt_list)
+    # print(pred_list)
+    # print(gt_list)
 
-    print(classification_report(np.asarray(gt_list), np.asarray(pred_list)))
-    print(confusion_matrix(np.asarray(gt_list), np.asarray(pred_list)))
+    logging.info(classification_report(np.asarray(gt_list), np.asarray(pred_list)))
+    logging.info(confusion_matrix(np.asarray(gt_list), np.asarray(pred_list)))
 
 
 if __name__ == '__main__':

@@ -6,7 +6,7 @@ import config.system as sys_config
 experiment_name = 'synth_CAM'
 
 # Model settings
-classifier_net = nets2D.CAM_net2D
+classifier_net = nets2D.CAM_net
 
 # Data settings
 data_identifier = 'synthetic'
@@ -37,5 +37,5 @@ momentum = None
 # Rarely changed settings
 use_data_fraction = False  # Should normally be False
 max_iterations = 1000000
-train_eval_frequency = 500
+train_eval_frequency = 100
 val_eval_frequency = 100

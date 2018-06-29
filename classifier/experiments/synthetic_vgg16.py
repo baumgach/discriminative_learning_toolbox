@@ -3,10 +3,10 @@ import tensorflow as tf
 import os
 import config.system as sys_config
 
-experiment_name = 'synth_normalnet'
+experiment_name = 'synth_vgg16'
 
 # Model settings
-classifier_net = nets2D.simplenet2D
+classifier_net = nets2D.vgg16
 
 # Data settings
 data_identifier = 'synthetic'
@@ -37,5 +37,5 @@ momentum = None
 # Rarely changed settings
 use_data_fraction = False  # Should normally be False
 max_iterations = 1000000
-train_eval_frequency = 500
+train_eval_frequency = 100
 val_eval_frequency = 100

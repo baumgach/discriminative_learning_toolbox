@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-def instance_norm2D(x, scope='instance_norm'):
+def instance_norm2D(x, scope='instance_norm', **kwargs):
 
     with tf.variable_scope(scope):
 
@@ -14,7 +14,7 @@ def instance_norm2D(x, scope='instance_norm'):
         return scale*normalized + offset
 
 
-def group_norm2D(x, G=32, eps=1e-5, scope='group_norm') :
+def group_norm2D(x, G=32, eps=1e-5, scope='group_norm', **kwargs) :
 
     with tf.variable_scope(scope) :
 
@@ -40,7 +40,8 @@ def layer_norm(x,
                beta=None,
                axes=(1, 2, 3),
                eps=1e-3,
-               scope='layer_norm'):
+               scope='layer_norm',
+               **kwargs):
 
     """
     Collect mean and variances on x except the first dimension. And apply normalization as below:
@@ -67,7 +68,7 @@ def layer_norm(x,
 
 
 
-def batch_renorm(x, training, moving_average_decay=0.99, scope='batch_renorm'):
+def batch_renorm(x, training, moving_average_decay=0.99, scope='batch_renorm', **kwargs):
     '''
     Batch renormalisation implementation using tf batch normalisation function.
     :param x: Input layer (should be before activation)
@@ -140,7 +141,7 @@ def batch_renorm(x, training, moving_average_decay=0.99, scope='batch_renorm'):
     return h_bn
 
 
-def batch_norm(x, training, moving_average_decay=0.99, scope='batch_norm'):
+def batch_norm(x, training, moving_average_decay=0.99, scope='batch_norm', **kwargs):
     '''
     Wrapper for tensorflows own batch normalisation function. 
     :param x: Input layer (should be before activation)
@@ -159,3 +160,11 @@ def batch_norm(x, training, moving_average_decay=0.99, scope='batch_norm'):
                                             scale=True)
 
     return h_bn
+
+
+def identity(x, **kwargs):
+    '''
+    Wrapper for tf idenity function, which allows to pass extra arguments that might be needed for other normalisers
+    via kwargs.
+    '''
+    return tf.identity(x)

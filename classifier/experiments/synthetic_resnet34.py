@@ -3,15 +3,15 @@ import tensorflow as tf
 import os
 import config.system as sys_config
 
-experiment_name = 'synth_rebuttal'
+experiment_name = 'synth_resnet34'
 
 # Model settings
-classifier_net = nets2D.rebuttalnet2D
+classifier_net = nets2D.resnet34
 
 # Data settings
 data_identifier = 'synthetic'
 preproc_folder = os.path.join(sys_config.project_root, 'data/preproc_data/synthetic')
-image_size = [128, 128]
+image_size = [112, 112]
 effect_size = 100
 num_samples = 10000
 moving_effect = True
@@ -37,5 +37,5 @@ momentum = None
 # Rarely changed settings
 use_data_fraction = False  # Should normally be False
 max_iterations = 1000000
-train_eval_frequency = 500
+train_eval_frequency = 100
 val_eval_frequency = 100

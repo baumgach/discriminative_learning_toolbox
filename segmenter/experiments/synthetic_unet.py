@@ -3,10 +3,10 @@ import tensorflow as tf
 import os
 import config.system as sys_config
 
-experiment_name = 'synth_residualunet_xent'
+experiment_name = 'synth_unet_xent_rerun'
 
 # Model settings
-network = nets2D.residual_unet2D
+network = nets2D.unet2D
 
 # Data settings
 data_identifier = 'synthetic'

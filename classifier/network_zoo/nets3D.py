@@ -14,28 +14,30 @@ def FCN_32_bn(x, nlabels, training, n0=32, norm=tfnorm.batch_norm, scope_reuse=F
         if scope_reuse:
             scope.reuse_variables()
 
-        conv1_1 = layers.conv3D(x, 'conv1_1', num_filters=n0, training=training, normalisation=norm, add_bias=False)
+        add_bias = False if norm == tfnorm.batch_norm else True
+
+        conv1_1 = layers.conv3D(x, 'conv1_1', num_filters=n0, training=training, normalisation=norm, add_bias=add_bias)
 
         pool1 = layers.maxpool3D(conv1_1)
 
-        conv2_1 = layers.conv3D(pool1, 'conv2_1', num_filters=n0*2, training=training, normalisation=norm, add_bias=False)
+        conv2_1 = layers.conv3D(pool1, 'conv2_1', num_filters=n0*2, training=training, normalisation=norm, add_bias=add_bias)
 
         pool2 = layers.maxpool3D(conv2_1)
 
-        conv3_1 = layers.conv3D(pool2, 'conv3_1', num_filters=n0*4, training=training, normalisation=norm, add_bias=False)
-        conv3_2 = layers.conv3D(conv3_1, 'conv3_2', num_filters=n0*4, training=training, normalisation=norm, add_bias=False)
+        conv3_1 = layers.conv3D(pool2, 'conv3_1', num_filters=n0*4, training=training, normalisation=norm, add_bias=add_bias)
+        conv3_2 = layers.conv3D(conv3_1, 'conv3_2', num_filters=n0*4, training=training, normalisation=norm, add_bias=add_bias)
 
         pool3 = layers.maxpool3D(conv3_2)
 
-        conv4_1 = layers.conv3D(pool3, 'conv4_1', num_filters=n0*8, training=training, normalisation=norm, add_bias=False)
-        conv4_2 = layers.conv3D(conv4_1, 'conv4_2', num_filters=n0*8, training=training, normalisation=norm, add_bias=False)
+        conv4_1 = layers.conv3D(pool3, 'conv4_1', num_filters=n0*8, training=training, normalisation=norm, add_bias=add_bias)
+        conv4_2 = layers.conv3D(conv4_1, 'conv4_2', num_filters=n0*8, training=training, normalisation=norm, add_bias=add_bias)
 
         pool4 = layers.maxpool3D(conv4_2)
 
-        conv5_1 = layers.conv3D(pool4, 'conv5_1', num_filters=n0*8, training=training, normalisation=norm, add_bias=False)
-        conv5_2 = layers.conv3D(conv5_1, 'conv5_2', num_filters=n0*8, training=training, normalisation=norm, add_bias=False)
+        conv5_1 = layers.conv3D(pool4, 'conv5_1', num_filters=n0*8, training=training, normalisation=norm, add_bias=add_bias)
+        conv5_2 = layers.conv3D(conv5_1, 'conv5_2', num_filters=n0*8, training=training, normalisation=norm, add_bias=add_bias)
 
-        convD_1 = layers.conv3D(conv5_2, 'convD_1', num_filters=n0*8, training=training, normalisation=norm, add_bias=False)
+        convD_1 = layers.conv3D(conv5_2, 'convD_1', num_filters=n0*8, training=training, normalisation=norm, add_bias=add_bias)
         convD_2 = layers.conv3D(convD_1,
                                 'convD_2',
                                 num_filters=nlabels,
@@ -45,71 +47,77 @@ def FCN_32_bn(x, nlabels, training, n0=32, norm=tfnorm.batch_norm, scope_reuse=F
                                 normalisation=tfnorm.batch_norm,
                                 add_bias=False)
 
-        diag_logits = layers.gloval_averagepool3D(convD_2, name='diagnosis_avg')
+        diag_logits = layers.global_averagepool3D(convD_2, name='diagnosis_avg')
 
     return diag_logits
 
 
 
-def allconv_bn(images, training, nlabels, scope_reuse=False):
+def allconv_bn(x, nlabels, training, n0=32, norm=tfnorm.batch_norm, scope_reuse=False):
 
     with tf.variable_scope('classifier') as scope:
 
         if scope_reuse:
             scope.reuse_variables()
 
-        conv1_1 = layers.conv3D_layer_bn(images, 'conv1_1', num_filters=32, training=training, strides=(2,2,2))
+        add_bias = False if norm==tfnorm.batch_norm else True
 
-        conv2_1 = layers.conv3D_layer_bn(conv1_1, 'conv2_1', num_filters=64, training=training, strides=(2,2,2))
+        conv1_1 = layers.conv3D(x, 'conv1_1', num_filters=n0, training=training, strides=(2, 2, 2), normalisation=norm, add_bias=add_bias)
 
-        conv3_1 = layers.conv3D_layer_bn(conv2_1, 'conv3_1', num_filters=128, training=training)
-        conv3_2 = layers.conv3D_layer_bn(conv3_1, 'conv3_2', num_filters=128, training=training, strides=(2,2,2))
+        conv2_1 = layers.conv3D(conv1_1, 'conv2_1', num_filters=n0*2, training=training, strides=(2,2,2), normalisation=norm, add_bias=add_bias)
 
-        conv4_1 = layers.conv3D_layer_bn(conv3_2, 'conv4_1', num_filters=256, training=training)
-        conv4_2 = layers.conv3D_layer_bn(conv4_1, 'conv4_2', num_filters=256, training=training, strides=(2,2,2))
+        conv3_1 = layers.conv3D(conv2_1, 'conv3_1', num_filters=n0*4, training=training, normalisation=norm, add_bias=add_bias)
+        conv3_2 = layers.conv3D(conv3_1, 'conv3_2', num_filters=n0*4, training=training, strides=(2,2,2), normalisation=norm, add_bias=add_bias)
 
-        conv5_1 = layers.conv3D_layer_bn(conv4_2, 'conv5_1', num_filters=256, training=training)
-        conv5_2 = layers.conv3D_layer_bn(conv5_1, 'conv5_2', num_filters=256, training=training)
+        conv4_1 = layers.conv3D(conv3_2, 'conv4_1', num_filters=n0*4, training=training, normalisation=norm, add_bias=add_bias)
+        conv4_2 = layers.conv3D(conv4_1, 'conv4_2', num_filters=n0*4, training=training, strides=(2,2,2))
 
-        convD_1 = layers.conv3D_layer_bn(conv5_2, 'convD_1', num_filters=256, training=training)
-        convD_2 = layers.conv3D_layer_bn(convD_1,
-                                         'convD_2',
-                                         num_filters=nlabels,
-                                         training=training,
-                                         kernel_size=(1,1,1),
-                                         activation=tf.identity)
+        conv5_1 = layers.conv3D(conv4_2, 'conv5_1', num_filters=n0*4, training=training, normalisation=norm, add_bias=add_bias)
+        conv5_2 = layers.conv3D(conv5_1, 'conv5_2', num_filters=n0*4, training=training, normalisation=norm, add_bias=add_bias)
 
-        diag_logits = layers.averagepool3D_layer(convD_2, name='diagnosis_avg')
+        convD_1 = layers.conv3D(conv5_2, 'convD_1', num_filters=n0*4, training=training, normalisation=norm, add_bias=add_bias)
+        convD_2 = layers.conv3D(convD_1,
+                                'convD_2',
+                                num_filters=nlabels,
+                                training=training,
+                                kernel_size=(1,1,1),
+                                activation=tf.identity,
+                                normalisation=norm,
+                                add_bias=add_bias)
+
+        diag_logits = layers.global_averagepool3D(convD_2, name='diagnosis_avg')
 
     return diag_logits
 
 
-def C3D_32_bn(images, training, nlabels, scope_reuse=False):
+def C3D_32_bn(x, nlabels, training, n0=32, norm=tfnorm.batch_norm, scope_reuse=False):
 
     with tf.variable_scope('classifier') as scope:
 
         if scope_reuse:
             scope.reuse_variables()
 
-        conv1_1 = layers.conv3D_layer_bn(images, 'conv1_1', num_filters=32, training=training)
+        add_bias = False if norm == tfnorm.batch_norm else True
 
-        pool1 = layers.maxpool3D_layer(conv1_1)
+        conv1_1 = layers.conv3D(x, 'conv1_1', num_filters=n0, training=training, normalisation=norm, add_bias=add_bias)
 
-        conv2_1 = layers.conv3D_layer_bn(pool1, 'conv2_1', num_filters=64, training=training)
+        pool1 = layers.maxpool3D(conv1_1)
 
-        pool2 = layers.maxpool3D_layer(conv2_1)
+        conv2_1 = layers.conv3D(pool1, 'conv2_1', num_filters=n0*2, training=training, normalisation=norm, add_bias=add_bias)
 
-        conv3_1 = layers.conv3D_layer_bn(pool2, 'conv3_1', num_filters=128, training=training)
-        conv3_2 = layers.conv3D_layer_bn(conv3_1, 'conv3_2', num_filters=128, training=training)
+        pool2 = layers.maxpool3D(conv2_1)
 
-        pool3 = layers.maxpool3D_layer(conv3_2)
+        conv3_1 = layers.conv3D(pool2, 'conv3_1', num_filters=n0*4, training=training, normalisation=norm, add_bias=add_bias)
+        conv3_2 = layers.conv3D(conv3_1, 'conv3_2', num_filters=n0*4, training=training, normalisation=norm, add_bias=add_bias)
 
-        conv4_1 = layers.conv3D_layer_bn(pool3, 'conv4_1', num_filters=256, training=training)
-        conv4_2 = layers.conv3D_layer_bn(conv4_1, 'conv4_2', num_filters=256, training=training)
+        pool3 = layers.maxpool3D(conv3_2)
 
-        pool4 = layers.maxpool3D_layer(conv4_2)
+        conv4_1 = layers.conv3D(pool3, 'conv4_1', num_filters=n0*8, training=training, normalisation=norm, add_bias=add_bias)
+        conv4_2 = layers.conv3D(conv4_1, 'conv4_2', num_filters=n0*8, training=training, normalisation=norm, add_bias=add_bias)
 
-        dense1 = layers.dense_layer_bn(pool4, 'dense1', hidden_units=512, training=training)
-        diag_logits = layers.dense_layer_bn(dense1, 'diag_logits', hidden_units=nlabels, activation=tf.identity, training=training)
+        pool4 = layers.maxpool3D(conv4_2)
+
+        dense1 = layers.dense_layer(pool4, 'dense1', hidden_units=n0*16, training=training, normalisation=norm, add_bias=add_bias)
+        diag_logits = layers.dense_layer(dense1, 'diag_logits', hidden_units=nlabels, activation=tf.identity, training=training, normalisation=norm, add_bias=add_bias)
 
     return diag_logits

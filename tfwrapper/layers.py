@@ -55,7 +55,7 @@ def global_averagepool2D(x, name=None):
     return op
 
 
-def gloval_averagepool3D(x, name=None):
+def global_averagepool3D(x, name=None):
     '''
     nets3D max pooling layer with 2x2x2 pooling as default
     '''
@@ -380,6 +380,10 @@ def residual_unit2D(x,
                     add_bias=True,
                     **kwargs):
 
+    """
+    See https://arxiv.org/abs/1512.03385
+    """
+
     bottom_num_filters = x.get_shape().as_list()[-1]
 
     adjust_nfilters = True if not bottom_num_filters == num_filters or down_sample else False
@@ -395,7 +399,7 @@ def residual_unit2D(x,
         conv1 = normalisation(conv1, scope='bn1', **kwargs)
         conv1 = activation(conv1)
 
-        conv2 = conv2D(conv1, 'conv2', num_filters=num_filters, strides=(1,1), activation=tf.identity, add_bias=add_bias)
+        conv2 = conv2D(conv1, 'conv2', num_filters=num_filters, activation=tf.identity, add_bias=add_bias)
         conv2 = normalisation(conv2, scope='bn2', **kwargs)
         # conv2 = activation(conv2)
 
@@ -419,11 +423,69 @@ def residual_unit2D(x,
         return block
 
 
+def identity_residual_unit2D(x,
+                             name,
+                             num_filters,
+                             down_sample=False,
+                             projection=True,
+                             activation=STANDARD_NONLINEARITY,
+                             normalisation=tfnorm.batch_norm,
+                             add_bias=True,
+                             **kwargs):
+
+    """
+    Better residual unit which should allow better gradient flow. 
+    See Identity Mappings in Deep Residual Networks (https://link.springer.com/chapter/10.1007/978-3-319-46493-0_38)
+    """
+
+    bottom_num_filters = x.get_shape().as_list()[-1]
+
+    if not projection:
+        assert (bottom_num_filters == num_filters) or (bottom_num_filters*2 == num_filters), \
+            'Number of filters must remain constant, or be increased by a ' \
+            'factor of 2. In filters: %d, Out filters: %d' % (bottom_num_filters, num_filters)
+
+    increase_nfilters = True if not bottom_num_filters == num_filters or down_sample else False
+
+    if down_sample:
+        first_strides = (2,2)
+    else:
+        first_strides = (1,1)
+
+    with tf.variable_scope(name):
+
+        op1 = normalisation(x, scope='bn1', **kwargs)
+        op1 = activation(op1)
+        op1 = conv2D(op1, 'conv1', num_filters=num_filters, strides=first_strides, activation=tf.identity, add_bias=add_bias)
+
+        op2 = normalisation(op1, scope='bn2', **kwargs)
+        op2 = activation(op2)
+        op2 = conv2D(op2, 'conv2', num_filters=num_filters, activation=tf.identity, add_bias=add_bias)
+
+        if increase_nfilters:
+            if projection:
+                projection = conv2D(x, 'projection', num_filters=num_filters, strides=first_strides, kernel_size=(1, 1), activation=tf.identity, add_bias=add_bias)
+                projection = normalisation(projection, scope='bn_projection', **kwargs)
+                skip = activation(projection)
+            else:
+                pad_size = (num_filters - bottom_num_filters) // 2
+                identity = tf.pad(x, paddings=[[0, 0], [0, 0], [0, 0], [pad_size, pad_size]])
+                if down_sample:
+                    identity = identity[:,::2,::2,:]
+                skip = identity
+        else:
+            skip = x
+
+        block = tf.add(skip, op2, name='add')
+
+        return block
+
+
 def dense_layer(bottom,
                 name,
                 hidden_units=512,
                 activation=STANDARD_NONLINEARITY,
-                normalisation=tf.identity,
+                normalisation=tfnorm.batch_norm,
                 normalise_post_activation=False,
                 dropout_p=None,
                 weight_init='he_normal',
@@ -490,12 +552,10 @@ def crop_and_concat(inputs, axis=-1):
         start_crop = np.subtract(larger_size, output_size) // 2
 
         if len(output_size) == 4:  # nets3D images
-            # if output_size.shape[0] == 5:  # nets3D images
             cropped_tensor = tf.slice(inputs[ii],
                                       (0, start_crop[0], start_crop[1], start_crop[2], 0),
                                       (-1, output_size[0], output_size[1], output_size[2], -1))
         elif len(output_size) == 3:  # nets2D images
-            # elif output_size.shape[0] == 4:
             cropped_tensor = tf.slice(inputs[ii],
                                       (0, start_crop[0], start_crop[1], 0),
                                       (-1, output_size[0], output_size[1], -1))

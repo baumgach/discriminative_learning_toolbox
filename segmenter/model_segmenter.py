@@ -250,9 +250,7 @@ class segmenter:
         prediction, softmax = self.sess.run([self.p_pl_, self.y_pl_],
                                             feed_dict={self.x_pl: images, self.training_pl: False})
 
-        confidence = softmax[prediction]
-
-        return prediction, confidence
+        return prediction, softmax
 
     ### HELPER FUNCTIONS ###################################################################################
 
@@ -300,12 +298,6 @@ class segmenter:
                 max_int=None,
                 batch_size=self.exp_config.batch_size,
                 mode='image'))
-
-            # sum_y = tf.summary.image('%s_predicted_mask' % prefix,
-            #                  tf_utils.prepare_tensor_for_summary(y_disp, mode='mask', nlabels=self.exp_config.nlabels))
-            # sum_y_gt = tf.summary.image('%s_groundtruth_mask' % prefix,
-            #                  tf_utils.prepare_tensor_for_summary(y_gt_disp, mode='mask', nlabels=self.exp_config.nlabels))
-            # sum_x = tf.summary.image('%s_input_image' % prefix, tf_utils.prepare_tensor_for_summary(x_disp, mode='image'))
 
             return tf.summary.merge([sum_y, sum_y_gt, sum_x])
 
