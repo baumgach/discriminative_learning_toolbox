@@ -15,7 +15,7 @@ data_root = '/usr/bmicnas01/data-biwi-01/bmicdatasets-originals/Originals/Challe
 dimensionality_mode = '2D'
 image_size = (256, 256)
 target_resolution = (0.625, 0.625)
-nlabels = 4
+nlabels = 3
 
 # Network settings
 n0 = 32
