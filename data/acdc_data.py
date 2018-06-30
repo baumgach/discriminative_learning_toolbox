@@ -28,7 +28,7 @@ class acdc_data():
         images_test = data['images_test']
         labels_test = data['%s_test' % label_name]
 
-        images_val = data['images_val']
+        images_val = data['images_validation']
         labels_val = data['%s_validation' % label_name]
 
         # Extract the number of training and testing points
