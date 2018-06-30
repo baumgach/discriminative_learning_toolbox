@@ -159,6 +159,26 @@ def map_images_to_intensity_range(X, min_o, max_o, percentiles=0):
     return X_mapped.astype(np.float32)
 
 
+# def normalise_images(X):
+#     '''
+#     Helper for making the images zero mean and unit standard deviation i.e. `white`
+#     '''
+#
+#     X_white = np.zeros(X.shape, dtype=np.float32)
+#
+#     for ii in range(X.shape[0]):
+#
+#         Xc = X[ii,:,:,:]
+#         mc = Xc.mean()
+#         sc = Xc.std()
+#
+#         Xc_white = np.divide((Xc - mc), sc)
+#
+#         X_white[ii,:,:,:] = Xc_white
+#
+#     return X_white.astype(np.float32)
+
+
 def normalise_images(X):
     '''
     Helper for making the images zero mean and unit standard deviation i.e. `white`
@@ -168,14 +188,7 @@ def normalise_images(X):
 
     for ii in range(X.shape[0]):
 
-        Xc = X[ii,:,:,:]
-        mc = Xc.mean()
-        sc = Xc.std()
-
-        Xc_white = np.divide((Xc - mc), sc)
-
-        X_white[ii,:,:,:] = Xc_white
+        Xc = X[ii,...]
+        X_white[ii,...] = normalise_image(Xc)
 
     return X_white.astype(np.float32)
-
-
