@@ -69,6 +69,8 @@ def count_slices(input_folder, folder_base):
             continue
 
         patient_id = int(folder.split('-')[-1])
+        if patient_id > 30:
+            continue
 
         # print(folder)
         # print(patient_id)
@@ -94,6 +96,8 @@ def get_patient_folders(input_folder, folder_base):
     for folder in os.listdir(input_folder):
         if folder.startswith('Prostate3T-01'):
             patient_id = int(folder.split('-')[-1])
+            if patient_id > 30:
+                continue
             train_test = test_train_val_split(patient_id)
             folder_list[train_test].append(os.path.join(input_folder, folder))
 
