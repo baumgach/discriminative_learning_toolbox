@@ -14,7 +14,7 @@ preproc_folder = os.path.join(sys_config.project_root, 'data/preproc_data/nci_pr
 data_root = '/usr/bmicnas01/data-biwi-01/bmicdatasets-originals/Originals/Challenge_Datasets/NCI_Prostate'
 dimensionality_mode = '2D'
 image_size = (256, 256)
-target_resolution = (1.36719, 1.36719)
+target_resolution = (0.625, 0.625)
 nlabels = 4
 
 # Network settings
@@ -40,4 +40,4 @@ momentum = None
 use_data_fraction = False  # Should normally be False
 max_iterations = 1000000
 train_eval_frequency = 50
-val_eval_frequency = 50
+val_eval_frequency = 5  # TODO CHANGE TO 50
