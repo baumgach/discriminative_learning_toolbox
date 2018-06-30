@@ -11,8 +11,8 @@ def main():
     # from segmenter.experiments import acdc_unet as exp_config
     # from segmenter.experiments import acdc_resunet as exp_config
     # from segmenter.experiments import acdc_unet3D as exp_config
-    # from segmenter.experiments import nci_prostate_unet as exp_config
-    from segmenter.experiments import nci_prostate_unet3D as exp_config
+    from segmenter.experiments import nci_prostate_unet as exp_config
+    # from segmenter.experiments import nci_prostate_unet3D as exp_config
 
     data_loader = data_switch(exp_config.data_identifier)
     data = data_loader(exp_config)
