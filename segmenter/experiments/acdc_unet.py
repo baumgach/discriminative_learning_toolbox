@@ -12,6 +12,7 @@ network = nets2D.unet2D_crfrnn
 data_identifier = 'acdc'
 preproc_folder = os.path.join(sys_config.project_root, 'data/preproc_data/acdc')
 data_root = '/scratch_net/bmicdl03/data/ACDC_challenge_20170617'
+dimensionality_mode = '2D'
 image_size = (256, 256)
 target_resolution = (1.36719, 1.36719)
 nlabels = 4

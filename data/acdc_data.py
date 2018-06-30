@@ -12,6 +12,7 @@ class acdc_data():
         data = acdc_data_loader.load_and_maybe_process_data(
             input_folder=exp_config.data_root,
             preprocessing_folder=exp_config.preproc_folder,
+            mode=exp_config.dimensionality_mode,
             size=exp_config.image_size,
             target_resolution=exp_config.target_resolution,
             force_overwrite=False,

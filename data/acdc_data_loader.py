@@ -49,14 +49,19 @@ def crop_or_pad_slice_to_size(slice, nx, ny):
     return slice_cropped
 
 
-def prepare_data(input_folder, output_file, size, target_resolution, split_test_train=True):
+def prepare_data(input_folder, output_file, mode, size, target_resolution, split_test_train=True):
     '''
     Main function that prepares a dataset from the raw challenge data to an hdf5 dataset
     '''
 
-    if not len(size) == 2:
+    assert (mode in ['2D', '3D']), 'Unknown mode: %s' % mode
+    if mode == '2D' and not len(size) == 2:
         raise AssertionError('Inadequate number of size parameters')
-    if not len(target_resolution) == 2:
+    if mode == '3D' and not len(size) == 3:
+        raise AssertionError('Inadequate number of size parameters')
+    if mode == '2D' and not len(target_resolution) == 2:
+        raise AssertionError('Inadequate number of target resolution parameters')
+    if mode == '3D' and not len(target_resolution) == 3:
         raise AssertionError('Inadequate number of target resolution parameters')
 
 
@@ -128,10 +133,20 @@ def prepare_data(input_folder, output_file, size, target_resolution, split_test_
         hdf5_file.create_dataset('cardiac_phase_%s' % tt, data=np.asarray(cardiac_phase_list[tt], dtype=np.uint8))
 
 
-    nx, ny = size
-    n_test = num_slices['test']
-    n_train = num_slices['train']
-    n_val = num_slices['validation']
+    if mode == '3D':
+        nx, ny, nz_max = size
+        n_train = len(file_list['train'])
+        n_test = len(file_list['test'])
+        n_val = len(file_list['validation'])
+
+    elif mode == '2D':
+        nx, ny = size
+        n_test = num_slices['test']
+        n_train = num_slices['train']
+        n_val = num_slices['validation']
+
+    else:
+        raise AssertionError('Wrong mode setting. This should never happen.')
 
     # print('Debug: Check if sets add up to correct value:')
     # print(n_train, n_val, n_test, n_train + n_val + n_test)
@@ -184,37 +199,56 @@ def prepare_data(input_folder, output_file, size, target_resolution, split_test_
             logging.info('Pixel size:')
             logging.info(pixel_size)
 
-            scale_vector = [pixel_size[0] / target_resolution[0], pixel_size[1] / target_resolution[1]]
+            ### PROCESSING LOOP FOR 3D DATA ################################
+            if mode == '3D':
 
-            for zz in range(img.shape[2]):
+                scale_vector = [pixel_size[0] / target_resolution[0],
+                                pixel_size[1] / target_resolution[1],
+                                pixel_size[2]/ target_resolution[2]]
 
-                slice_img = np.squeeze(img[:, :, zz])
-                slice_rescaled = transform.rescale(slice_img,
-                                                   scale_vector,
-                                                   order=1,
-                                                   preserve_range=True,
-                                                   multichannel=False,
-                                                   mode='constant')
+                img_scaled = transform.rescale(img,
+                                               scale_vector,
+                                               order=1,
+                                               preserve_range=True,
+                                               multichannel=False,
+                                               mode='constant')
+                mask_scaled = transform.rescale(mask,
+                                                scale_vector,
+                                                order=0,
+                                                preserve_range=True,
+                                                multichannel=False,
+                                                mode='constant')
 
-                slice_mask = np.squeeze(mask[:, :, zz])
-                mask_rescaled = transform.rescale(slice_mask,
-                                                  scale_vector,
-                                                  order=0,
-                                                  preserve_range=True,
-                                                  multichannel=False,
-                                                  mode='constant')
+                slice_vol = np.zeros((nx, ny, nz_max), dtype=np.float32)
+                mask_vol = np.zeros((nx, ny, nz_max), dtype=np.uint8)
 
-                slice_cropped = crop_or_pad_slice_to_size(slice_rescaled, nx, ny)
-                mask_cropped = crop_or_pad_slice_to_size(mask_rescaled, nx, ny)
+                nz_curr = img_scaled.shape[2]
+                stack_from = (nz_max - nz_curr) // 2
 
-                img_list[train_test].append(slice_cropped)
-                mask_list[train_test].append(mask_cropped)
+                if stack_from < 0:
+                    raise AssertionError('nz_max is too small for the chosen through plane resolution. Consider changing'
+                                         'the size or the target resolution in the through-plane.')
 
+                for zz in range(nz_curr):
+
+                    slice_rescaled = img_scaled[:,:,zz]
+                    mask_rescaled = mask_scaled[:,:,zz]
+
+                    slice_cropped = crop_or_pad_slice_to_size(slice_rescaled, nx, ny)
+                    mask_cropped = crop_or_pad_slice_to_size(mask_rescaled, nx, ny)
+
+                    slice_vol[:,:,stack_from] = slice_cropped
+                    mask_vol[:,:,stack_from] = mask_cropped
+
+                    stack_from += 1
+
+                img_list[train_test].append(slice_vol)
+                mask_list[train_test].append(mask_vol)
 
                 write_buffer += 1
 
-                # Writing needs to happen inside the loop over the slices
                 if write_buffer >= MAX_WRITE_BUFFER:
+
                     counter_to = counter_from + write_buffer
                     _write_range_to_hdf5(data, train_test, img_list, mask_list, counter_from, counter_to)
                     _release_tmp_memory(img_list, mask_list, train_test)
@@ -223,7 +257,91 @@ def prepare_data(input_folder, output_file, size, target_resolution, split_test_
                     counter_from = counter_to
                     write_buffer = 0
 
-        hdf5_file.create_dataset('full_mask_available_%s' % train_test, data=np.asarray(full_mask_list, dtype=np.uint8))
+            ### PROCESSING LOOP FOR SLICE-BY-SLICE 2D DATA ###################
+            elif mode == '2D':
+
+                scale_vector = [pixel_size[0] / target_resolution[0], pixel_size[1] / target_resolution[1]]
+
+                for zz in range(img.shape[2]):
+
+                    slice_img = np.squeeze(img[:, :, zz])
+                    slice_rescaled = transform.rescale(slice_img,
+                                                       scale_vector,
+                                                       order=1,
+                                                       preserve_range=True,
+                                                       multichannel=False,
+                                                       mode = 'constant')
+
+                    slice_mask = np.squeeze(mask[:, :, zz])
+                    mask_rescaled = transform.rescale(slice_mask,
+                                                      scale_vector,
+                                                      order=0,
+                                                      preserve_range=True,
+                                                      multichannel=False,
+                                                      mode='constant')
+
+                    slice_cropped = crop_or_pad_slice_to_size(slice_rescaled, nx, ny)
+                    mask_cropped = crop_or_pad_slice_to_size(mask_rescaled, nx, ny)
+
+                    img_list[train_test].append(slice_cropped)
+                    mask_list[train_test].append(mask_cropped)
+
+                    write_buffer += 1
+
+                    # Writing needs to happen inside the loop over the slices
+                    if write_buffer >= MAX_WRITE_BUFFER:
+
+                        counter_to = counter_from + write_buffer
+                        _write_range_to_hdf5(data, train_test, img_list, mask_list, counter_from, counter_to)
+                        _release_tmp_memory(img_list, mask_list, train_test)
+
+                        # reset stuff for next iteration
+                        counter_from = counter_to
+                        write_buffer = 0
+
+
+
+
+            # scale_vector = [pixel_size[0] / target_resolution[0], pixel_size[1] / target_resolution[1]]
+            #
+            # for zz in range(img.shape[2]):
+            #
+            #     slice_img = np.squeeze(img[:, :, zz])
+            #     slice_rescaled = transform.rescale(slice_img,
+            #                                        scale_vector,
+            #                                        order=1,
+            #                                        preserve_range=True,
+            #                                        multichannel=False,
+            #                                        mode='constant')
+            #
+            #     slice_mask = np.squeeze(mask[:, :, zz])
+            #     mask_rescaled = transform.rescale(slice_mask,
+            #                                       scale_vector,
+            #                                       order=0,
+            #                                       preserve_range=True,
+            #                                       multichannel=False,
+            #                                       mode='constant')
+            #
+            #     slice_cropped = crop_or_pad_slice_to_size(slice_rescaled, nx, ny)
+            #     mask_cropped = crop_or_pad_slice_to_size(mask_rescaled, nx, ny)
+            #
+            #     img_list[train_test].append(slice_cropped)
+            #     mask_list[train_test].append(mask_cropped)
+            #
+            #
+            #     write_buffer += 1
+            #
+            #     # Writing needs to happen inside the loop over the slices
+            #     if write_buffer >= MAX_WRITE_BUFFER:
+            #         counter_to = counter_from + write_buffer
+            #         _write_range_to_hdf5(data, train_test, img_list, mask_list, counter_from, counter_to)
+            #         _release_tmp_memory(img_list, mask_list, train_test)
+            #
+            #         # reset stuff for next iteration
+            #         counter_from = counter_to
+            #         write_buffer = 0
+
+        # hdf5_file.create_dataset('full_mask_available_%s' % train_test, data=np.asarray(full_mask_list, dtype=np.uint8))
 
         # after file loop: Write the remaining data
 
@@ -263,6 +381,7 @@ def _release_tmp_memory(img_list, mask_list, train_test):
 
 def load_and_maybe_process_data(input_folder,
                                 preprocessing_folder,
+                                mode,
                                 size,
                                 target_resolution,
                                 force_overwrite=False,
@@ -272,6 +391,7 @@ def load_and_maybe_process_data(input_folder,
 
     :param input_folder: Folder where the raw ACDC challenge data is located
     :param preprocessing_folder: Folder where the proprocessed data should be written to
+    :param mode: Can either be '2D' or '3D'. 2D saves the data slice-by-slice, 3D saves entire volumes
     :param size: Size of the output slices/volumes in pixels/voxels
     :param target_resolution: Resolution to which the data should resampled. Should have same shape as size
     :param force_overwrite: Set this to True if you want to overwrite already preprocessed data [default: False]
@@ -283,9 +403,9 @@ def load_and_maybe_process_data(input_folder,
     res_str = '_'.join([str(i) for i in target_resolution])
 
     if not split_test_train:
-        data_file_name = 'data_%s_size_%s_res_%s_onlytrain.hdf5' % ('2D', size_str, res_str)
+        data_file_name = 'data_%s_size_%s_res_%s_onlytrain.hdf5' % (mode, size_str, res_str)
     else:
-        data_file_name = 'data_%s_size_%s_res_%s.hdf5' % ('2D', size_str, res_str)
+        data_file_name = 'data_%s_size_%s_res_%s.hdf5' % (mode, size_str, res_str)
 
     data_file_path = os.path.join(preprocessing_folder, data_file_name)
 

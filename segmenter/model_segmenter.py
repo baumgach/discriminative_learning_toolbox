@@ -190,8 +190,9 @@ class segmenter:
                 logging.info('Training Data Eval:')
                 self._do_validation(self.data.train,
                                     self.train_summary,
-                                    self.train_error_,
-                                    self.train_tot_dice_score_,
+                                    self.train_error,
+                                    self.train_tot_dice_score,
+                                    self.train_mean_dice_score,
                                     self.train_lbl_dice_scores)
 
             # Do validation set evaluation
@@ -205,8 +206,9 @@ class segmenter:
 
                 val_loss, val_dice = self._do_validation(self.data.validation,
                                                          self.val_summary,
-                                                         self.val_error_,
-                                                         self.val_tot_dice_score_,
+                                                         self.val_error,
+                                                         self.val_tot_dice_score,
+                                                         self.val_mean_dice_score,
                                                          self.val_lbl_dice_scores)
 
                 if val_dice >= best_dice_score:
@@ -306,11 +308,14 @@ class segmenter:
 
         ### Validation summaries
 
-        self.val_error_ = tf.placeholder(tf.float32, shape=[], name='val_task_loss')
-        val_error_summary = tf.summary.scalar('validation_task_loss', self.val_error_)
+        self.val_error = tf.placeholder(tf.float32, shape=[], name='val_task_loss')
+        val_error_summary = tf.summary.scalar('validation_task_loss', self.val_error)
 
-        self.val_tot_dice_score_ = tf.placeholder(tf.float32, shape=[], name='val_dice_total_score')
-        val_tot_dice_summary = tf.summary.scalar('validation_dice_tot_score', self.val_tot_dice_score_)
+        self.val_tot_dice_score = tf.placeholder(tf.float32, shape=[], name='val_dice_total_score')
+        val_tot_dice_summary = tf.summary.scalar('validation_dice_tot_score', self.val_tot_dice_score)
+
+        self.val_mean_dice_score = tf.placeholder(tf.float32, shape=[], name='val_dice_mean_score')
+        val_mean_dice_summary = tf.summary.scalar('validation_dice_mean_score', self.val_mean_dice_score)
 
         self.val_lbl_dice_scores = []
         val_lbl_dice_summaries = []
@@ -321,15 +326,21 @@ class segmenter:
 
         val_image_summary = _image_summaries('validation', self.x_pl, self.p_pl_, self.y_pl)
 
-        self.val_summary = tf.summary.merge([val_error_summary, val_tot_dice_summary, val_image_summary] + val_lbl_dice_summaries)
+        self.val_summary = tf.summary.merge([val_error_summary,
+                                             val_tot_dice_summary,
+                                             val_mean_dice_summary,
+                                             val_image_summary] + val_lbl_dice_summaries)
 
         ### Train summaries
 
-        self.train_error_ = tf.placeholder(tf.float32, shape=[], name='train_task_loss')
-        train_error_summary = tf.summary.scalar('training_task_loss', self.train_error_)
+        self.train_error = tf.placeholder(tf.float32, shape=[], name='train_task_loss')
+        train_error_summary = tf.summary.scalar('training_task_loss', self.train_error)
 
-        self.train_tot_dice_score_ = tf.placeholder(tf.float32, shape=[], name='train_dice_tot_score')
-        train_tot_dice_summary = tf.summary.scalar('train_dice_tot_score', self.train_tot_dice_score_)
+        self.train_tot_dice_score = tf.placeholder(tf.float32, shape=[], name='train_dice_tot_score')
+        train_tot_dice_summary = tf.summary.scalar('train_dice_tot_score', self.train_tot_dice_score)
+
+        self.train_mean_dice_score = tf.placeholder(tf.float32, shape=[], name='train_dice_mean_score')
+        train_mean_dice_summary = tf.summary.scalar('train_dice_mean_score', self.train_mean_dice_score)
 
         self.train_lbl_dice_scores = []
         train_lbl_dice_summaries = []
@@ -340,7 +351,10 @@ class segmenter:
 
         train_image_summary = _image_summaries('train', self.x_pl, self.p_pl_, self.y_pl)
 
-        self.train_summary = tf.summary.merge([train_error_summary, train_tot_dice_summary, train_image_summary] + train_lbl_dice_summaries)
+        self.train_summary = tf.summary.merge([train_error_summary,
+                                               train_tot_dice_summary,
+                                               train_mean_dice_summary,
+                                               train_image_summary] + train_lbl_dice_summaries)
 
 
     def _get_optimizer(self):
@@ -402,7 +416,7 @@ class segmenter:
         return prediction, loss, dice_per_img_and_lbl, dice_per_img
 
 
-    def _do_validation(self, data_handle, summary, tot_loss_pl, tot_dice_pl, lbl_dice_pl_list):
+    def _do_validation(self, data_handle, summary, tot_loss_pl, tot_dice_pl, mean_dice_pl, lbl_dice_pl_list):
 
         diag_loss_ii = 0
         num_batches = 0
@@ -444,6 +458,7 @@ class segmenter:
         feed_dict[self.y_pl] = y
         feed_dict[tot_loss_pl] = avg_loss
         feed_dict[tot_dice_pl] = avg_dice
+        feed_dict[mean_dice_pl] = np.mean(per_structure_dice)
         for ii in range(self.nlabels):
             feed_dict[lbl_dice_pl_list[ii]] = per_structure_dice[ii]
 
