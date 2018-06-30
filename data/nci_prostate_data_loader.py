@@ -140,6 +140,7 @@ def prepare_data(input_folder, output_file, mode, size, target_resolution):
     for tt, num_points in zip(['test', 'train', 'validation'], [n_test, n_train, n_val]):
 
         if num_points > 0:
+            print('was here')
             data['images_%s' % tt] = hdf5_file.create_dataset("images_%s" % tt, [num_points] + list(size), dtype=np.float32)
             data['masks_%s' % tt] = hdf5_file.create_dataset("masks_%s" % tt, [num_points] + list(size), dtype=np.uint8)
 
@@ -201,6 +202,11 @@ def prepare_data(input_folder, output_file, mode, size, target_resolution):
 
             # fix swap axis
             mask = np.swapaxes(mask, 0, 1)
+
+            print('mask.shape')
+            print(mask.shape)
+            print('img.shape')
+            print(img.shape)
 
             ### PROCESSING LOOP FOR SLICE-BY-SLICE 3D DATA ###################
             if mode == '3D':
