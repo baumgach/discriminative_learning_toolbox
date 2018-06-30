@@ -49,7 +49,7 @@ def global_averagepool2D(x, name=None):
     nets3D max pooling layer with 2x2x2 pooling as default
     '''
 
-    op = tf.reduce_mean(x, axis=(1,2), keep_dims=False, name=name)
+    op = tf.reduce_mean(x, axis=(1,2), keepdims=False, name=name)
     tf.summary.histogram(op.op.name + '/activations', op)
 
     return op
@@ -60,7 +60,7 @@ def global_averagepool3D(x, name=None):
     nets3D max pooling layer with 2x2x2 pooling as default
     '''
 
-    op = tf.reduce_mean(x, axis=(1,2,3), keep_dims=False, name=name)
+    op = tf.reduce_mean(x, axis=(1,2,3), keepdims=False, name=name)
     tf.summary.histogram(op.op.name + '/activations', op)
 
     return op
