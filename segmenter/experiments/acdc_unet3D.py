@@ -3,7 +3,7 @@ import tensorflow as tf
 import os
 import config.system as sys_config
 
-experiment_name = 'acdc_unet3D_depth4'
+experiment_name = 'acdc_unet3D_depth4_n0_32'
 
 # Model settings
 network = nets3D.unet3D
@@ -19,7 +19,7 @@ nlabels = 4
 tensorboard_slice = 10
 
 # Network settings
-n0 = 16
+n0 = 32
 
 # Cost function
 weight_decay = 0.0
