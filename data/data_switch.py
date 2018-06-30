@@ -8,6 +8,8 @@ def data_switch(data_identifier):
         from data.adni_data import adni_data as data_loader
     elif data_identifier == 'acdc':
         from data.acdc_data import acdc_data as data_loader
+    elif data_identifier == 'prostate_nci':
+        from data.nci_prostate_data import nci_prostate_data as data_loader
     else:
         raise ValueError('Unknown data identifier: %s' % data_identifier)
 

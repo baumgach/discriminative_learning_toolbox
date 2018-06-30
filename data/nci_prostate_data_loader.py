@@ -10,6 +10,8 @@ import nibabel as nib
 import gc
 import h5py
 from skimage import transform
+import dicom
+import nrrd
 
 import utils
 
@@ -49,6 +51,50 @@ def crop_or_pad_slice_to_size(slice, nx, ny):
     return slice_cropped
 
 
+def test_train_val_split(patient_id):
+
+    if patient_id % 5 == 0:
+        return 'test'
+    elif patient_id % 4 == 0:
+        return 'validation'
+    else:
+        return 'train'
+
+def count_slices(input_folder, folder_base):
+
+    num_slices = {'train': 0, 'test': 0, 'val': 0}
+
+    for folder in os.listdir(input_folder):
+        if not folder.startswith(folder_base):
+            continue
+
+        patient_id = int(folder.split('-')[-1])
+
+        path = os.path.join(input_folder, folder)
+        for dirName, subdirList, fileList in os.walk(path):
+            for filename in fileList:
+                if filename.lower().endswith('.cdm'):  # check whether the file's DICOM
+
+                    train_test = test_train_val_split(patient_id)
+
+                    num_slices[train_test] += 1
+
+    return num_slices
+
+
+def get_patient_folders(input_folder, folder_base):
+
+    folder_list = {'train': [], 'test': [], 'validation': []}
+
+    for folder in os.listdir(input_folder):
+        if folder.startswith('Prostate3T-01'):
+            patient_id = int(folder.split('-')[-1])
+            train_test = test_train_val_split(patient_id)
+            folder_list[train_test].append(os.path.join(input_folder, folder))
+
+    return folder_list
+
+
 def prepare_data(input_folder, output_file, mode, size, target_resolution):
     '''
     Main function that prepares a dataset from the raw challenge data to an hdf5 dataset
@@ -64,101 +110,39 @@ def prepare_data(input_folder, output_file, mode, size, target_resolution):
     if mode == '3D' and not len(target_resolution) == 3:
         raise AssertionError('Inadequate number of target resolution parameters')
 
+    image_folder = os.path.join(input_folder, 'Prostate-3T')
+    mask_folder = os.path.join(input_folder, 'NCI_ISBI_Challenge-Prostate3T_Training_Segmentations')
 
     hdf5_file = h5py.File(output_file, "w")
 
-    diag_list = {'test': [], 'train': [], 'validation': []}
-    height_list = {'test': [], 'train': [], 'validation': []}
-    weight_list = {'test': [], 'train': [], 'validation': []}
-    patient_id_list = {'test': [], 'train': [], 'validation': []}
-    cardiac_phase_list = {'test': [], 'train': [], 'validation': []}
-
-    file_list = {'test': [], 'train': [], 'validation': []}
-    num_slices = {'test': 0, 'train': 0, 'validation': 0}
-
     logging.info('Counting files and parsing meta data...')
-
-    for folder in os.listdir(input_folder):
-
-        folder_path = os.path.join(input_folder, folder)
-
-        if os.path.isdir(folder_path):
-
-            if int(folder[-3:]) % 5 == 0:
-                train_test = 'test'
-            elif int(folder[-3:]) % 4 == 0:
-                train_test = 'validation'
-            else:
-                train_test = 'train'
-
-            infos = {}
-            for line in open(os.path.join(folder_path, 'Info.cfg')):
-                label, value = line.split(':')
-                infos[label] = value.rstrip('\n').lstrip(' ')
-
-            patient_id = folder.lstrip('patient')
-
-            for file in glob.glob(os.path.join(folder_path, 'patient???_frame??.nii.gz')):
-
-                file_list[train_test].append(file)
-
-                # diag_list[train_test].append(diagnosis_to_int(infos['Group']))
-                diag_list[train_test].append(diagnosis_dict[infos['Group']])
-                weight_list[train_test].append(infos['Weight'])
-                height_list[train_test].append(infos['Height'])
-
-                patient_id_list[train_test].append(patient_id)
-
-                systole_frame = int(infos['ES'])
-                diastole_frame = int(infos['ED'])
-
-                file_base = file.split('.')[0]
-                frame = int(file_base.split('frame')[-1])
-                if frame == systole_frame:
-                    cardiac_phase_list[train_test].append(1)  # 1 == systole
-                elif frame == diastole_frame:
-                    cardiac_phase_list[train_test].append(2)  # 2 == diastole
-                else:
-                    cardiac_phase_list[train_test].append(0)  # 0 means other phase
-
-                nifty_img = nib.load(file)
-                num_slices[train_test] += nifty_img.shape[2]
-
-    # Write the small datasets
-    for tt in ['test', 'train', 'validation']:
-        hdf5_file.create_dataset('diagnosis_%s' % tt, data=np.asarray(diag_list[tt], dtype=np.uint8))
-        hdf5_file.create_dataset('weight_%s' % tt, data=np.asarray(weight_list[tt], dtype=np.float32))
-        hdf5_file.create_dataset('height_%s' % tt, data=np.asarray(height_list[tt], dtype=np.float32))
-        hdf5_file.create_dataset('patient_id_%s' % tt, data=np.asarray(patient_id_list[tt], dtype=np.uint8))
-        hdf5_file.create_dataset('cardiac_phase_%s' % tt, data=np.asarray(cardiac_phase_list[tt], dtype=np.uint8))
-
+    folder_list = get_patient_folders(image_folder, folder_base='Prostate3T-01')
 
     if mode == '3D':
         nx, ny, nz_max = size
-        n_train = len(file_list['train'])
-        n_test = len(file_list['test'])
-        n_val = len(file_list['validation'])
-
+        n_train = len(folder_list['train'])
+        n_test = len(folder_list['test'])
+        n_val = len(folder_list['validation'])
     elif mode == '2D':
+        num_slices = count_slices(image_folder, folder_base='Prostate3T-01')
         nx, ny = size
         n_test = num_slices['test']
         n_train = num_slices['train']
         n_val = num_slices['validation']
-
     else:
         raise AssertionError('Wrong mode setting. This should never happen.')
 
-    # print('Debug: Check if sets add up to correct value:')
-    # print(n_train, n_val, n_test, n_train + n_val + n_test)
+    print('Debug: Check if sets add up to correct value:')
+    print(n_train, n_val, n_test, n_train + n_val + n_test)
 
     # Create datasets for images and masks
     data = {}
     for tt, num_points in zip(['test', 'train', 'validation'], [n_test, n_train, n_val]):
 
         if num_points > 0:
-            data['images_%s' % tt] = hdf5_file.create_dataset("images_%s" % tt, [num_points] + list(size),
-                                                              dtype=np.float32)
+            data['images_%s' % tt] = hdf5_file.create_dataset("images_%s" % tt, [num_points] + list(size), dtype=np.float32)
             data['masks_%s' % tt] = hdf5_file.create_dataset("masks_%s" % tt, [num_points] + list(size), dtype=np.uint8)
+
 
     mask_list = {'test': [], 'train': [], 'validation': []}
     img_list = {'test': [], 'train': [], 'validation': []}
@@ -170,41 +154,60 @@ def prepare_data(input_folder, output_file, mode, size, target_resolution):
         write_buffer = 0
         counter_from = 0
 
-        full_mask_list = []
         patient_counter = 0
-        for file in file_list[train_test]:
+
+        for folder in folder_list[train_test]:
 
             patient_counter += 1
 
             logging.info('-----------------------------------------------------------')
-            logging.info('Doing: %s' % file)
+            logging.info('Doing: %s' % folder)
 
-            file_base = file.split('.nii.gz')[0]
-            file_mask = file_base + '_gt.nii.gz'
+            lstFilesDCM = []  # create an empty list
+            for dirName, subdirList, fileList in os.walk(folder):
+                # fileList.sort()
+                for filename in fileList:
+                    if ".dcm" in filename.lower():  # check whether the file's DICOM
+                        lstFilesDCM.append(os.path.join(dirName, filename))
 
-            # patient_id = int(file_base.split('/')[-1].lstrip('patient').split('_')[0])
+            # Get ref file
+            RefDs = dicom.read_file(lstFilesDCM[0])
 
-            img_dat = utils.load_nii(file)
-            mask_dat = utils.load_nii(file_mask)
+            # Load dimensions based on the number of rows, columns, and slices (along the Z axis)
+            ConstPixelDims = (int(RefDs.Rows), int(RefDs.Columns), len(lstFilesDCM))
 
-            img = img_dat[0].copy()
-            mask = mask_dat[0].copy()
+            # Load spacing values (in mm)
+            pixel_size = (float(RefDs.PixelSpacing[0]), float(RefDs.PixelSpacing[1]), float(RefDs.SliceThickness))
+            # print("pixel spacing 0,1; slice thickness ",ConstPixelSpacing)
 
-            img = utils.normalise_image(img)
+            print('PixelDims')
+            print(ConstPixelDims)
+            print('PixelSpacing')
+            print(pixel_size)
 
-            pixel_size = (img_dat[2].structarr['pixdim'][1],
-                          img_dat[2].structarr['pixdim'][2],
-                          img_dat[2].structarr['pixdim'][3])
+            # The array is sized based on 'ConstPixelDims'
+            img = np.zeros(ConstPixelDims, dtype=RefDs.pixel_array.dtype)
 
-            logging.info('Pixel size:')
-            logging.info(pixel_size)
+            # loop through all the DICOM files
+            for filenameDCM in lstFilesDCM:
+                # read the file
+                ds = dicom.read_file(filenameDCM)
+                # store the raw image data
+                # img[:, :, lstFilesDCM.index(filenameDCM)] = ds.pixel_array # index number field is not set correctly ! instead instance no is the slice no !
+                img[:, :, ds.InstanceNumber - 1] = ds.pixel_array
 
-            ### PROCESSING LOOP FOR 3D DATA ################################
+            mask_path = os.path.join(mask_folder, folder.split('/')[-1] + '.nrrd')
+            mask, options = nrrd.read(mask_path)
+
+            # fix swap axis
+            mask = np.swapaxes(mask, 0, 1)
+
+            ### PROCESSING LOOP FOR SLICE-BY-SLICE 3D DATA ###################
             if mode == '3D':
 
                 scale_vector = [pixel_size[0] / target_resolution[0],
                                 pixel_size[1] / target_resolution[1],
-                                pixel_size[2]/ target_resolution[2]]
+                                pixel_size[2] / target_resolution[2]]
 
                 img_scaled = transform.rescale(img,
                                                scale_vector,
@@ -299,51 +302,6 @@ def prepare_data(input_folder, output_file, mode, size, target_resolution):
                         counter_from = counter_to
                         write_buffer = 0
 
-
-
-
-            # scale_vector = [pixel_size[0] / target_resolution[0], pixel_size[1] / target_resolution[1]]
-            #
-            # for zz in range(img.shape[2]):
-            #
-            #     slice_img = np.squeeze(img[:, :, zz])
-            #     slice_rescaled = transform.rescale(slice_img,
-            #                                        scale_vector,
-            #                                        order=1,
-            #                                        preserve_range=True,
-            #                                        multichannel=False,
-            #                                        mode='constant')
-            #
-            #     slice_mask = np.squeeze(mask[:, :, zz])
-            #     mask_rescaled = transform.rescale(slice_mask,
-            #                                       scale_vector,
-            #                                       order=0,
-            #                                       preserve_range=True,
-            #                                       multichannel=False,
-            #                                       mode='constant')
-            #
-            #     slice_cropped = crop_or_pad_slice_to_size(slice_rescaled, nx, ny)
-            #     mask_cropped = crop_or_pad_slice_to_size(mask_rescaled, nx, ny)
-            #
-            #     img_list[train_test].append(slice_cropped)
-            #     mask_list[train_test].append(mask_cropped)
-            #
-            #
-            #     write_buffer += 1
-            #
-            #     # Writing needs to happen inside the loop over the slices
-            #     if write_buffer >= MAX_WRITE_BUFFER:
-            #         counter_to = counter_from + write_buffer
-            #         _write_range_to_hdf5(data, train_test, img_list, mask_list, counter_from, counter_to)
-            #         _release_tmp_memory(img_list, mask_list, train_test)
-            #
-            #         # reset stuff for next iteration
-            #         counter_from = counter_to
-            #         write_buffer = 0
-
-        # hdf5_file.create_dataset('full_mask_available_%s' % train_test, data=np.asarray(full_mask_list, dtype=np.uint8))
-
-        # after file loop: Write the remaining data
 
         logging.info('Writing remaining data')
         counter_to = counter_from + write_buffer

@@ -136,7 +136,7 @@ def put_kernels_on_grid(images, batch_size, pad=1, min_int=None, max_int=None, *
     else:
         raise ValueError("Unknown mode: '%s'" % mode)
 
-    images *= 255.0
+    images *= 254.0  # previously had issues with intensities wrapping around, will setting to 254 fix it?
     images = tf.cast(images, tf.uint8)
 
     # pad X and Y
