@@ -56,7 +56,7 @@ def unet3D(x, training, nlabels, n0=32, resolution_levels=3, norm=tfnorm.batch_n
                 dec[jj].append(layers.conv3D(dec[jj][-1], 'conv_%d_1' % jj, num_filters=n0*(2**ii), training=training, normalisation=norm, add_bias=add_bias))
                 dec[jj].append(layers.conv3D(dec[jj][-1], 'conv_%d_2' % jj, num_filters=n0*(2**ii), training=training, normalisation=norm, add_bias=add_bias))
 
-        output = layers.conv2D(dec[-1][-1], 'prediction', num_filters=nlabels, kernel_size=(1,1), activation=tf.identity, training=training, normalisation=norm, add_bias=add_bias)
+        output = layers.conv3D(dec[-1][-1], 'prediction', num_filters=nlabels, kernel_size=(1,1,1), activation=tf.identity, training=training, normalisation=norm, add_bias=add_bias)
 
         dec[-1].append(output)
 
