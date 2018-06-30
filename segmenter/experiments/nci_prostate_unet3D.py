@@ -3,7 +3,7 @@ import tensorflow as tf
 import os
 import config.system as sys_config
 
-experiment_name = 'prostate_unet3D'
+experiment_name = 'nci_prostate_unet3D'
 
 # Model settings
 network = nets3D.unet3D

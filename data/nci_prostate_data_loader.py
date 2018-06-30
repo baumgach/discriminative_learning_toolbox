@@ -205,6 +205,8 @@ def prepare_data(input_folder, output_file, mode, size, target_resolution):
                 # img[:, :, lstFilesDCM.index(filenameDCM)] = ds.pixel_array # index number field is not set correctly ! instead instance no is the slice no !
                 img[:, :, ds.InstanceNumber - 1] = ds.pixel_array
 
+            img = utils.normalise_image(img)
+
             mask_path = os.path.join(mask_folder, folder.split('/')[-1] + '.nrrd')
             mask, options = nrrd.read(mask_path)
 
