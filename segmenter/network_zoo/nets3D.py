@@ -7,7 +7,7 @@ from tfwrapper import layers
 from tfwrapper import normalisation as tfnorm
 
 
-def unet3D(x, training, nlabels, n0=32, resolution_levels=3, norm=tfnorm.batch_norm, scope_reuse=False, return_net=False, **kwargs):
+def unet3D(x, training, nlabels, n0=32, resolution_levels=4, norm=tfnorm.batch_norm, scope_reuse=False, return_net=False, **kwargs):
 
     with tf.variable_scope('segmenter') as scope:
 

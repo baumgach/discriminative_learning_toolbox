@@ -314,6 +314,9 @@ class segmenter:
         self.val_error = tf.placeholder(tf.float32, shape=[], name='val_task_loss')
         val_error_summary = tf.summary.scalar('validation_task_loss', self.val_error)
 
+        # Note: Total dice is the Dice over all pixels of an image
+        #       Mean Dice is the mean of the per label dices, which is not affected by class imbalance
+
         self.val_tot_dice_score = tf.placeholder(tf.float32, shape=[], name='val_dice_total_score')
         val_tot_dice_summary = tf.summary.scalar('validation_dice_tot_score', self.val_tot_dice_score)
 
@@ -469,8 +472,11 @@ class segmenter:
         self.summary_writer.add_summary(summary_msg, global_step=self.sess.run(tf.train.get_global_step()))
 
         ### Output logs
+        # Note: Total dice is the Dice over all pixels of an image
+        #       Mean Dice is the mean of the per label dices, which is not affected by class imbalance
         logging.info('  Average loss: %0.04f' % avg_loss)
-        logging.info('  Average Dice: %0.04f' % avg_dice)
+        logging.info('  Total Dice: %0.04f' % avg_dice)
+        logging.info('  Mean Dice: %0.04f' % np.mean(per_structure_dice))
         for ii in range(self.nlabels):
             logging.info('  Dice lbl %d: %0.04f' % (ii, per_structure_dice[ii]))
         logging.info('---')

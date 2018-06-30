@@ -3,7 +3,7 @@ import tensorflow as tf
 import os
 import config.system as sys_config
 
-experiment_name = 'acdc_unet3D'
+experiment_name = 'acdc_unet3D_depth4'
 
 # Model settings
 network = nets3D.unet3D
