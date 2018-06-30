@@ -70,6 +70,11 @@ def count_slices(input_folder, folder_base):
 
         patient_id = int(folder.split('-')[-1])
 
+        print(folder)
+        print(patient_id)
+        print(os.path.join(input_folder, folder))
+        print('--')
+
         path = os.path.join(input_folder, folder)
         for dirName, subdirList, fileList in os.walk(path):
             for filename in fileList:
@@ -140,7 +145,6 @@ def prepare_data(input_folder, output_file, mode, size, target_resolution):
     for tt, num_points in zip(['test', 'train', 'validation'], [n_test, n_train, n_val]):
 
         if num_points > 0:
-            print('was here')
             data['images_%s' % tt] = hdf5_file.create_dataset("images_%s" % tt, [num_points] + list(size), dtype=np.float32)
             data['masks_%s' % tt] = hdf5_file.create_dataset("masks_%s" % tt, [num_points] + list(size), dtype=np.uint8)
 
