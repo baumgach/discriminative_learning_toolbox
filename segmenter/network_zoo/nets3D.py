@@ -51,7 +51,7 @@ def unet3D(x, training, nlabels, n0=32, resolution_levels=3, norm=tfnorm.batch_n
                 dec[jj].append(layers.transposed_conv3D(next_inp, name='upconv_%d' % jj, num_filters=nlabels, training=training, normalisation=norm, add_bias=add_bias))
 
                 # skip connection
-                dec[jj].append(layers.crop_and_concat([dec[jj][-1], enc[ii-1][-1]], axis=3))
+                dec[jj].append(layers.crop_and_concat([dec[jj][-1], enc[ii-1][-1]], axis=4))
 
                 dec[jj].append(layers.conv3D(dec[jj][-1], 'conv_%d_1' % jj, num_filters=n0*(2**ii), training=training, normalisation=norm, add_bias=add_bias))
                 dec[jj].append(layers.conv3D(dec[jj][-1], 'conv_%d_2' % jj, num_filters=n0*(2**ii), training=training, normalisation=norm, add_bias=add_bias))
