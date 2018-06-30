@@ -17,6 +17,9 @@ image_size = (256, 256)
 target_resolution = (1.36719, 1.36719)
 nlabels = 4
 
+# Network settings
+n0 = 32
+
 # Cost function
 weight_decay = 0.0
 loss_type = 'crossentropy'  # 'dice_micro'/'dice_macro'/'dice_macro_robust'/'crossentropy'

@@ -46,7 +46,10 @@ class segmenter:
         self.lr_pl = tf.placeholder(tf.float32, shape=[], name='learning_rate')
         self.training_pl = tf.placeholder(tf.bool, shape=[], name='training_time')
 
-        self.l_pl_ = exp_config.network(self.x_pl, nlabels=self.nlabels, training=self.training_pl)
+        self.l_pl_ = exp_config.network(self.x_pl,
+                                        nlabels=self.nlabels,
+                                        training=self.training_pl,
+                                        n0=self.exp_config.n0)
         self.y_pl_ = tf.nn.softmax(self.l_pl_)
         self.p_pl_ = tf.cast(tf.argmax(self.y_pl_, axis=-1), tf.int32)
 

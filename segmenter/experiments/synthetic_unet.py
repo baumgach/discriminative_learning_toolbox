@@ -19,6 +19,9 @@ rescale_to_one = True
 nlabels = 2
 label_type = 'mask'
 
+# Network settings
+n0 = 64
+
 # Cost function
 weight_decay = 0.0
 loss_type = 'crossentropy'  # 'dice_micro'/'dice_macro'/'dice_macro_robust'/'crossentropy'
