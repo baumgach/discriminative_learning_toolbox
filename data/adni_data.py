@@ -83,7 +83,7 @@ class adni_data():
 if __name__ == '__main__':
 
     # If the program is called as main, perform some debugging operations
-    from classifier.experiments import adni_experiment as exp_config
+    from classifier.experiments import adni_fcn32 as exp_config
     data = adni_data(exp_config)
 
     print('DEBUGGING OUTPUT')

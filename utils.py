@@ -5,6 +5,28 @@
 import nibabel as nib
 import numpy as np
 import os
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
+
+try:
+    import cv2
+except:
+    logging.warning('Could not import opencv. Augmentation functions will be unavailable.')
+else:
+    def rotate_image(img, angle, interp=cv2.INTER_LINEAR):
+
+        rows, cols = img.shape[:2]
+        rotation_matrix = cv2.getRotationMatrix2D((cols / 2, rows / 2), angle, 1)
+        return cv2.warpAffine(img, rotation_matrix, (cols, rows), flags=interp)
+
+
+    def resize_image(im, size, interp=cv2.INTER_LINEAR):
+
+        im_resized = cv2.resize(im, (size[1], size[0]), interpolation=interp)  # swap sizes to account for weird OCV API
+        return im_resized
+
+
 
 def ncc(a,v, zero_norm=True):
 
@@ -123,6 +145,18 @@ def map_image_to_intensity_range(image, min_o, max_o, percentiles=0):
     image[image < min_o] = min_o
 
     return image
+
+
+def map_images_to_intensity_range(X, min_o, max_o, percentiles=0):
+
+    X_mapped = np.zeros(X.shape, dtype=np.float32)
+
+    for ii in range(X.shape[0]):
+
+        Xc = X[ii,...]
+        X_mapped[ii,...] = map_image_to_intensity_range(Xc, min_o, max_o, percentiles)
+
+    return X_mapped.astype(np.float32)
 
 
 def normalise_images(X):
