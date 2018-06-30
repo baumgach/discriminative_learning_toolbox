@@ -11,7 +11,7 @@ network = nets2D.unet2D
 # Data settings
 data_identifier = 'nci_prostate'
 preproc_folder = os.path.join(sys_config.project_root, 'data/preproc_data/nci_prostate')
-data_root = '/usr/bmicnas01/data-biwi-01/bmicdatasets-originals/Originals/Challenge_Datasets/'
+data_root = '/usr/bmicnas01/data-biwi-01/bmicdatasets-originals/Originals/Challenge_Datasets/NCI_Prostate'
 dimensionality_mode = '2D'
 image_size = (256, 256)
 target_resolution = (1.36719, 1.36719)
