@@ -3,7 +3,7 @@ import tensorflow as tf
 import os
 import config.system as sys_config
 
-experiment_name = 'synth_unet_xent_rerun'
+experiment_name = 'synth_unet_xent_rererun'
 
 # Model settings
 network = nets2D.unet2D
