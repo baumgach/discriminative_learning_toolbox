@@ -10,7 +10,7 @@ import nibabel as nib
 import gc
 import h5py
 from skimage import transform
-import dicom
+import pydicom as dicom
 import nrrd
 
 import utils
