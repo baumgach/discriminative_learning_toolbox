@@ -62,7 +62,7 @@ def test_train_val_split(patient_id):
 
 def count_slices(input_folder, folder_base):
 
-    num_slices = {'train': 0, 'test': 0, 'val': 0}
+    num_slices = {'train': 0, 'test': 0, 'validation': 0}
 
     for folder in os.listdir(input_folder):
         if not folder.startswith(folder_base):
