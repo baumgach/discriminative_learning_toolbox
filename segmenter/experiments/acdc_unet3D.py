@@ -16,6 +16,7 @@ dimensionality_mode = '3D'
 image_size = (112, 112, 24)
 target_resolution = (2.5, 2.5, 5.0)
 nlabels = 4
+tensorboard_slice = 10
 
 # Cost function
 weight_decay = 0.0

@@ -276,9 +276,9 @@ class segmenter:
                 raise ValueError('Invalid image dimensions')
 
             if data_dimension == 3:
-                y_disp = tf.expand_dims(y[:, :, :, self.exp_config.image_z_slice], axis=-1)
-                y_gt_disp = tf.expand_dims(y_gt[:, :, :, self.exp_config.image_z_slice], axis=-1)
-                x_disp = x[:, :, :, self.exp_config.image_z_slice, :]
+                y_disp = tf.expand_dims(y[:, :, :, self.exp_config.tensorboard_slice], axis=-1)
+                y_gt_disp = tf.expand_dims(y_gt[:, :, :, self.exp_config.tensorboard_slice], axis=-1)
+                x_disp = x[:, :, :, self.exp_config.tensorboard_slice, :]
             else:
                 y_disp = tf.expand_dims(y, axis=-1)
                 y_gt_disp = tf.expand_dims(y_gt, axis=-1)
