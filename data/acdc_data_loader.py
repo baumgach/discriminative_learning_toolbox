@@ -414,7 +414,7 @@ def load_and_maybe_process_data(input_folder,
     if not os.path.exists(data_file_path) or force_overwrite:
         logging.info('This configuration of mode, size and target resolution has not yet been preprocessed')
         logging.info('Preprocessing now!')
-        prepare_data(input_folder, data_file_path, size, target_resolution, split_test_train=split_test_train)
+        prepare_data(input_folder, data_file_path, mode, size, target_resolution, split_test_train=split_test_train)
     else:
         logging.info('Already preprocessed this configuration. Loading now!')
 
