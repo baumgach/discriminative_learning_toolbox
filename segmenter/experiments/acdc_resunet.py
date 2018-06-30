@@ -21,8 +21,8 @@ weight_decay = 0.0
 loss_type = 'crossentropy'  # 'dice_micro'/'dice_macro'/'dice_macro_robust'/'crossentropy'
 
 # Training settings
-batch_size = 6
-n_accum_grads = 2
+batch_size = 4
+n_accum_grads = 3
 learning_rate = 1e-2
 optimizer_handle = tf.train.AdamOptimizer
 beta1=0.9

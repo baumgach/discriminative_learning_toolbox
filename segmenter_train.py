@@ -8,8 +8,8 @@ def main():
 
     # Select experiment below
     # from segmenter.experiments import synthetic_unet as exp_config
-    from segmenter.experiments import acdc_unet as exp_config
-    # from segmenter.experiments import acdc_resunet as exp_config
+    # from segmenter.experiments import acdc_unet as exp_config
+    from segmenter.experiments import acdc_resunet as exp_config
 
     data_loader = data_switch(exp_config.data_identifier)
     data = data_loader(exp_config)
