@@ -120,7 +120,7 @@ def unet2D_crfrnn(x, training, nlabels, n0=64, resolution_levels=5, norm=tfnorm.
                           n0=n0,
                           resolution_levels=resolution_levels,
                           norm=norm,
-                          conv_unit=layers.residual_unit2D,
+                          conv_unit=layers.conv2D,
                           scope_reuse=scope_reuse,
                           return_net=False)
 
