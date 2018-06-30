@@ -40,4 +40,4 @@ momentum = None
 use_data_fraction = False  # Should normally be False
 max_iterations = 1000000
 train_eval_frequency = 50
-val_eval_frequency = 5  # TODO CHANGE TO 50
+val_eval_frequency = 50  
