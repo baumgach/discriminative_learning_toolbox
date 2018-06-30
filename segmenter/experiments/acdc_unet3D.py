@@ -13,7 +13,7 @@ data_identifier = 'acdc'
 preproc_folder = os.path.join(sys_config.project_root, 'data/preproc_data/acdc')
 data_root = '/scratch_net/bmicdl03/data/ACDC_challenge_20170617'
 dimensionality_mode = '3D'
-image_size = (116, 116, 28)
+image_size = (112, 112, 24)
 target_resolution = (2.5, 2.5, 5.0)
 nlabels = 4
 
