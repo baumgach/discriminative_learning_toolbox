@@ -3,7 +3,7 @@ import tensorflow as tf
 import os
 import config.system as sys_config
 
-experiment_name = 'acdc_unet_crfrnn_xent_lr0.001'
+experiment_name = 'acdc_unet_crfrnn_xent'
 
 # Model settings
 network = nets2D.unet2D_crfrnn
@@ -23,7 +23,7 @@ loss_type = 'crossentropy'  # 'dice_micro'/'dice_macro'/'dice_macro_robust'/'cro
 # Training settings
 batch_size = 12
 n_accum_grads = 1
-learning_rate = 1e-3
+learning_rate = 1e-2
 optimizer_handle = tf.train.AdamOptimizer
 beta1=0.9
 beta2=0.999
