@@ -70,15 +70,15 @@ def count_slices(input_folder, folder_base):
 
         patient_id = int(folder.split('-')[-1])
 
-        print(folder)
-        print(patient_id)
-        print(os.path.join(input_folder, folder))
-        print('--')
+        # print(folder)
+        # print(patient_id)
+        # print(os.path.join(input_folder, folder))
+        # print('--')
 
         path = os.path.join(input_folder, folder)
         for dirName, subdirList, fileList in os.walk(path):
             for filename in fileList:
-                if filename.lower().endswith('.cdm'):  # check whether the file's DICOM
+                if filename.lower().endswith('.dcm'):  # check whether the file's DICOM
 
                     train_test = test_train_val_split(patient_id)
 
