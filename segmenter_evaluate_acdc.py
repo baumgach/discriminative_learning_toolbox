@@ -316,7 +316,7 @@ def main(input_folder, output_folder, model_path, exp_config, do_postprocessing=
                 per_lbl_assd = []
                 per_lbl_hd = []
 
-                for lbl in range(exp_config.nlabels):
+                for lbl in [3,1,2]: #range(exp_config.nlabels):
 
                     binary_pred = (y_ == lbl) * 1
                     binary_gt = (y == lbl) * 1

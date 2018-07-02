@@ -63,7 +63,7 @@ def main(model_path, exp_config, do_plots=False):
             plt.imshow(np.squeeze(y))
             plt.show()
 
-        for lbl in [3,1,2]:
+        for lbl in range(exp_config.nlabels):
 
             binary_pred = (y_ == lbl) * 1
             binary_gt = (y == lbl) * 1
