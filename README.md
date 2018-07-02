@@ -21,9 +21,7 @@ such as:
  - Identity Resnet34
  - Aggregating gradient updates over multiple batches
  - CRF-RNN
- - Instance normalisation
- - Layer normalisation
- - Group normalisation
+ - Normalisation layers (batch norm, group norm, instance norm, layer norm, batch renorm)
  - Saliency maps (guided backprop, class activation mappings (CAM) and more)
  - etc. 
 
