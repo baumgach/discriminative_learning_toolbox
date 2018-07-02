@@ -10,8 +10,7 @@ def main():
 
     # from classifier.experiments import synthetic_CAM as exp_config
     # from classifier.experiments import synthetic_vgg16 as exp_config
-    # from classifier.experiments import synthetic_resnet34 as exp_config
-    from classifier.experiments import chestX_vgg16 as exp_config
+    from classifier.experiments import synthetic_resnet34 as exp_config
 
     # Get Data
     data_loader = data_switch(exp_config.data_identifier)
