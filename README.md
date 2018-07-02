@@ -28,8 +28,12 @@ such as:
  - etc. 
 
 Author:
-- Christian F. Baumgartner ([email](mailto:baumgartner@vision.ee.ethz.ch))
+ - Christian F. Baumgartner ([email](mailto:baumgartner@vision.ee.ethz.ch))
 
+Contributions by:
+ - Ender Konugoklu (code for synthetic data generation)
+ - Yigit Baran Can (code for CRF-RNN layer)
+ - Lisa Koch (code for ACDC evaluation)
 
 ## Requirements 
 
