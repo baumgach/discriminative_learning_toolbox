@@ -32,6 +32,7 @@ Author:
 
 Contributions by:
  - Ender Konukoglu (code for synthetic data generation)
+ - Krishna Chaitanya (code for reading NCI prostate data)
  - Yigit Baran Can (code for CRF-RNN layer)
  - Lisa Koch (code for ACDC evaluation)
 
