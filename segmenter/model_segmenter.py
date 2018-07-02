@@ -481,7 +481,7 @@ class segmenter:
             logging.info('  Dice lbl %d: %0.04f' % (ii, per_structure_dice[ii]))
         logging.info('---')
 
-        return avg_loss, avg_dice
+        return avg_loss, np.mean(per_structure_dice)
 
 
 

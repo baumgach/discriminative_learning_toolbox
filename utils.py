@@ -6,6 +6,7 @@ import nibabel as nib
 import numpy as np
 import os
 import logging
+from skimage import measure
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
@@ -159,26 +160,6 @@ def map_images_to_intensity_range(X, min_o, max_o, percentiles=0):
     return X_mapped.astype(np.float32)
 
 
-# def normalise_images(X):
-#     '''
-#     Helper for making the images zero mean and unit standard deviation i.e. `white`
-#     '''
-#
-#     X_white = np.zeros(X.shape, dtype=np.float32)
-#
-#     for ii in range(X.shape[0]):
-#
-#         Xc = X[ii,:,:,:]
-#         mc = Xc.mean()
-#         sc = Xc.std()
-#
-#         Xc_white = np.divide((Xc - mc), sc)
-#
-#         X_white[ii,:,:,:] = Xc_white
-#
-#     return X_white.astype(np.float32)
-
-
 def normalise_images(X):
     '''
     Helper for making the images zero mean and unit standard deviation i.e. `white`
@@ -192,3 +173,29 @@ def normalise_images(X):
         X_white[ii,...] = normalise_image(Xc)
 
     return X_white.astype(np.float32)
+
+
+def keep_largest_connected_components(mask):
+    '''
+    Keeps only the largest connected components of each label for a segmentation mask.
+    '''
+
+    out_img = np.zeros(mask.shape, dtype=np.uint8)
+
+    for struc_id in [1, 2, 3]:
+
+        binary_img = mask == struc_id
+        blobs = measure.label(binary_img, connectivity=1)
+
+        props = measure.regionprops(blobs)
+
+        if not props:
+            continue
+
+        area = [ele.area for ele in props]
+        largest_blob_ind = np.argmax(area)
+        largest_blob_label = props[largest_blob_ind].label
+
+        out_img[blobs == largest_blob_label] = struc_id
+
+    return out_img

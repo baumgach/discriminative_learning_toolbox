@@ -21,6 +21,7 @@ import logging
 from data.data_switch import data_switch
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
+structures_dict = {1: 'RV', 2: 'Myo', 3: 'LV'}
 
 def main(model_path, exp_config, do_plots=False):
 
@@ -62,7 +63,7 @@ def main(model_path, exp_config, do_plots=False):
             plt.imshow(np.squeeze(y))
             plt.show()
 
-        for lbl in range(exp_config.nlabels):
+        for lbl in [3,1,2]:
 
             binary_pred = (y_ == lbl) * 1
             binary_gt = (y == lbl) * 1
@@ -96,19 +97,18 @@ def main(model_path, exp_config, do_plots=False):
     mean_per_lbl_assd = assd_arr.mean(axis=0)
     mean_per_lbl_hd = hd_arr.mean(axis=0)
 
-    print('Dice')
-    print(mean_per_lbl_dice)
-    print(np.mean(mean_per_lbl_dice))
-    print('ASSD')
-    print(mean_per_lbl_assd)
-    print(np.mean(mean_per_lbl_assd))
-    print('HD')
-    print(mean_per_lbl_hd)
-    print(np.mean(mean_per_lbl_hd))
-
-    print('Classification metrics')
-    print(classification_report(np.asarray(per_pixel_gts).flatten(), np.asarray(per_pixel_preds).flatten()))
-    print(confusion_matrix(np.asarray(per_pixel_gts).flatten(), np.asarray(per_pixel_preds).flatten()))
+    logging.info('Dice')
+    logging.info(structures_dict)
+    logging.info(mean_per_lbl_dice)
+    logging.info(np.mean(mean_per_lbl_dice))
+    logging.info('ASSD')
+    logging.info(structures_dict)
+    logging.info(mean_per_lbl_assd)
+    logging.info(np.mean(mean_per_lbl_assd))
+    logging.info('HD')
+    logging.info(structures_dict)
+    logging.info(mean_per_lbl_hd)
+    logging.info(np.mean(mean_per_lbl_hd))
 
 
 if __name__ == '__main__':
