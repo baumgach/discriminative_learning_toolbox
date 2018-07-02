@@ -39,7 +39,7 @@ Contributions by:
 ## Requirements 
 
 - Python 3.4 (only tested with 3.4.3)
-- Tensorflow >= 1.2 (tested with 1.8.0)
+- Tensorflow (tested with 1.20 and 1.8.0)
 - The remainder of the requirements are given in `requirements.txt`
 
 ## Getting the code
