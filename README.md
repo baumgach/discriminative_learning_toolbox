@@ -35,6 +35,7 @@ Contributions by:
  - Krishna Chaitanya (code for reading NCI prostate data)
  - Yigit Baran Can (code for CRF-RNN layer)
  - Lisa Koch (code for ACDC evaluation)
+ - Firat Ozdemir (code for summing over batches in Dice calculation)
 
 ## Requirements 
 
