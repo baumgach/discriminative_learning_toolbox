@@ -9,7 +9,7 @@ segmentation and classification networks.
 
 Specifically, it contains code for:
 
-- ADNI classification
+- ADNI Alzheimer's classification
 - ACDC cardiac challenge segmentation
 - NCI ISBI prostate challenge segmentation
 - Segmentation and classification of synthetic toy data
@@ -17,8 +17,9 @@ Specifically, it contains code for:
 It includes wrappers and implementations for many state-of-the-art deep learning techniques
 such as:
  - U-Net (2D and 3D)
- - Resnet
- - Identity Resnet
+ - Resnet34
+ - Identity Resnet34
+ - Aggregating gradient updates over multiple batches
  - CRF-RNN
  - Instance normalisation
  - Layer normalisation
