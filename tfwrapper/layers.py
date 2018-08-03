@@ -310,15 +310,33 @@ def bilinear_upsample2D(x, name, factor):
 
 def bilinear_upsample3D(x, name, factor):
 
-    bottom_shape = x.get_shape().as_list()
-    output_size = tf.stack([bottom_shape[1] * factor, bottom_shape[2] * factor, bottom_shape[3] * factor])
+    # Taken from: https://niftynet.readthedocs.io/en/dev/_modules/niftynet/layer/linear_resize.html
 
     with tf.variable_scope(name):
 
-        op = tf.image.resize_images(x, output_size)
+        b_size, x_size, y_size, z_size, c_size =  x.shape.as_list()
 
-    return op
+        x_size_new = x_size*factor
+        y_size_new = y_size*factor
+        z_size_new = z_size*factor
 
+        # resize y-z
+        squeeze_b_x = tf.reshape(x, [-1, y_size, z_size, c_size])
+        resize_b_x = tf.image.resize_bilinear( squeeze_b_x, [y_size_new, z_size_new])
+        resume_b_x = tf.reshape(resize_b_x, [b_size, x_size, y_size_new, z_size_new, c_size])
+
+        # resize x
+        #   first reorient
+        reoriented = tf.transpose(resume_b_x, [0, 3, 2, 1, 4])
+
+        #   squeeze and 2d resize
+        squeeze_b_z = tf.reshape( reoriented, [-1, y_size_new, x_size, c_size])
+        resize_b_z = tf.image.resize_bilinear(squeeze_b_z, [y_size_new, x_size_new])
+        resume_b_z = tf.reshape(resize_b_z, [b_size, z_size_new, y_size_new, x_size_new, c_size])
+
+        output_tensor = tf.transpose(resume_b_z, [0, 3, 2, 1, 4])
+
+    return output_tensor
 
 def dilated_conv2D(bottom,
                    name,
