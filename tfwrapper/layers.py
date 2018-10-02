@@ -631,6 +631,10 @@ def dropout(bottom, keep_prob, training):
 def crfrnn(unary, rgb_g, num_classes,
               theta_alpha, theta_beta, theta_gamma,
               num_iterations, scope='crfrnn', **kwargs):
+
+    # Code by Yigit Baran Can (see https://link.springer.com/chapter/10.1007/978-3-030-00889-5_27)
+
+
     #    shape=[num_classes,num_classes]
     #    tf.initializers.random_uniform
     #
