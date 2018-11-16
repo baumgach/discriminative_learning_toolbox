@@ -44,10 +44,11 @@ class acdc_data():
 
         # Create the batch providers
         self.train = BatchProvider(images_train, labels_train, train_indices,
-                                   do_augmentations=False,
+                                   do_augmentations=True,
                                    augmentation_options={'do_rotations': True,
                                                          'do_scaleaug': True,
                                                          'do_fliplr': True,
-                                                         'do_flipup': True})
+                                                         'do_flipup': True,
+                                                         'do_elasticaug': True})
         self.validation = BatchProvider(images_val, labels_val, val_indices)
         self.test = BatchProvider(images_test, labels_test, test_indices)
