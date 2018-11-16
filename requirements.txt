@@ -20,6 +20,7 @@ matplotlib==2.2.2
 networkx==2.1
 nibabel==2.3.0
 numpy==1.14.5
+opencv-contrib-python==3.4.3.18
 pandas==0.20.3
 parso==0.2.1
 pexpect==4.6.0
