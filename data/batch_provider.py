@@ -139,20 +139,21 @@ class BatchProvider():
                 img = np.squeeze(images[ii, ...])
                 lbl = np.squeeze(labels[ii, ...])
 
-                # ROTATE
-                if do_rotations:
-                    coin_flip = np.random.randint(augment_every_nth)
-                    if coin_flip == 0:
+                coin_flip = np.random.randint(augment_every_nth)
+                if coin_flip == 0:
+
+                    # ROTATE
+                    if do_rotations:
+
                         angles = get_option('rot_degrees', 10.0)
                         random_angle = np.random.uniform(-angles, angles)
                         img = utils.rotate_image(img, random_angle)
                         if augment_labels:
                             lbl = utils.rotate_image(lbl, random_angle, interp=cv2.INTER_NEAREST)
 
-                # RANDOM CROP SCALE
-                if do_scaleaug:
-                    coin_flip = np.random.randint(augment_every_nth)
-                    if coin_flip == 0:
+                    # RANDOM CROP SCALE
+                    if do_scaleaug:
+
                         offset = get_option('offset', 30)
                         n_x, n_y = img.shape
                         r_y = np.random.random_integers(n_y - offset, n_y)
