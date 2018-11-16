@@ -167,7 +167,6 @@ class BatchProvider():
 
 
                     # RANDOM ELASTIC DEFOMRATIONS (like in U-NET)
-
                     if do_elasticaug:
 
                         mu = 0
