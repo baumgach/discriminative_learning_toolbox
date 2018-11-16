@@ -2,9 +2,6 @@
 import numpy as np
 import utils
 
-import logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
-
 class BatchProvider():
     """
     This is a helper class to conveniently access mini batches of training, testing and validation data
