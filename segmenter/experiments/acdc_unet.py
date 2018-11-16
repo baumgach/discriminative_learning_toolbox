@@ -3,10 +3,10 @@ import tensorflow as tf
 import os
 import config.system as sys_config
 
-experiment_name = 'acdc_unet_crfrnn_xent_lr0.001_bs10'
+experiment_name = 'acdc_unet_no_aug'
 
 # Model settings
-network = nets2D.unet2D_crfrnn
+network = nets2D.unet2D
 
 # Data settings
 data_identifier = 'acdc'

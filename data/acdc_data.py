@@ -43,6 +43,11 @@ class acdc_data():
         val_indices = np.arange(N_val)
 
         # Create the batch providers
-        self.train = BatchProvider(images_train, labels_train, train_indices)
+        self.train = BatchProvider(images_train, labels_train, train_indices,
+                                   do_augmentations=False,
+                                   augmentation_options={'do_rotations': True,
+                                                         'do_scaleaug': True,
+                                                         'do_fliplr': True,
+                                                         'do_flipup': True})
         self.validation = BatchProvider(images_val, labels_val, val_indices)
         self.test = BatchProvider(images_test, labels_test, test_indices)
