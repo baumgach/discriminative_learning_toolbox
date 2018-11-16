@@ -127,6 +127,7 @@ class BatchProvider():
             do_scaleaug = get_option('do_scaleaug', False)
             do_fliplr = get_option('do_fliplr', False)
             do_flipud = get_option('do_flipud', False)
+            do_elasticaug = get_option('do_elasticaug', False)
             augment_every_nth = get_option('augment_every_nth', 2)  # 2 means augment half of the images
                                                                     # 1 means augment every image
 
@@ -163,6 +164,39 @@ class BatchProvider():
                         img = utils.resize_image(img[p_y:(p_y + r_y), p_x:(p_x + r_y)], (n_x, n_y))
                         if augment_labels:
                             lbl = utils.resize_image(lbl[p_y:(p_y + r_y), p_x:(p_x + r_y)], (n_x, n_y), interp=cv2.INTER_NEAREST)
+
+
+                    # RANDOM ELASTIC DEFOMRATIONS (like in U-NET)
+
+                    if do_elasticaug:
+
+                        mu = 0
+                        sigma = 10
+                        n_x, n_y = img.shape
+
+                        dx = np.random.normal(mu, sigma, 9)
+                        dx_mat = np.reshape(dx, (3, 3))
+                        dx_img = utils.resize_image(dx_mat, (n_x, n_y), interp=cv2.INTER_CUBIC)
+
+                        dy = np.random.normal(mu, sigma, 9)
+                        dy_mat = np.reshape(dy, (3, 3))
+                        dy_img = utils.resize_image(dy_mat, (n_x, n_y), interp=cv2.INTER_CUBIC)
+
+                        grid_x, grid_y = np.meshgrid(np.arange(n_x), np.arange(n_y))
+
+                        map_x = (grid_x + dx_img).astype(np.float32)
+                        map_y = (grid_y + dy_img).astype(np.float32)
+
+                        # The following command converts the maps to compact fixed point representation
+                        # this leads to a ~20% increase in speed but could lead to accuracy losses
+                        # Can be uncommented
+                        map_x, map_y = cv2.convertMaps(map_x, map_y, dstmap1type=cv2.CV_16SC2)
+
+                        img = cv2.remap(img, map_x, map_y, interpolation=cv2.INTER_LINEAR)
+                        if augment_labels:
+                            lbl = cv2.remap(lbl, map_x, map_y, interpolation=cv2.INTER_LINEAR)
+                            # lbl = cv2.remap(lbl, map_x, map_y, interpolation=cv2.INTER_NEAREST)
+
 
                 # RANDOM FLIP
                 if do_fliplr:
