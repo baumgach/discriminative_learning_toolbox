@@ -6,8 +6,7 @@ import nibabel as nib
 import numpy as np
 import os
 import logging
-from skimage import measure
-
+from skimage import measure, transform
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
 try:
@@ -21,13 +20,70 @@ else:
         rotation_matrix = cv2.getRotationMatrix2D((cols / 2, rows / 2), angle, 1)
         return cv2.warpAffine(img, rotation_matrix, (cols, rows), flags=interp)
 
+    def rotate_image_as_onehot(img, angle, nlabels, interp=cv2.INTER_LINEAR):
+
+        onehot_output = rotate_image(convert_to_onehot(img, nlabels=nlabels), angle, interp)
+        return np.argmax(onehot_output, axis=-1)
 
     def resize_image(im, size, interp=cv2.INTER_LINEAR):
 
         im_resized = cv2.resize(im, (size[1], size[0]), interpolation=interp)  # swap sizes to account for weird OCV API
         return im_resized
 
+    def resize_image_as_onehot(im, size, nlabels, interp=cv2.INTER_LINEAR):
 
+        onehot_output = resize_image(convert_to_onehot(im, nlabels), size, interp=interp)
+        return np.argmax(onehot_output, axis=-1)
+
+
+    def deformation_to_transformation(dx, dy):
+
+        nx, ny = dx.shape
+
+        grid_x, grid_y = np.meshgrid(np.arange(nx), np.arange(ny))
+
+        map_x = (grid_x + dx).astype(np.float32)
+        map_y = (grid_y + dy).astype(np.float32)
+
+        return map_x, map_y
+
+    def dense_image_warp(im, dx, dy, interp=cv2.INTER_LINEAR):
+
+        map_x, map_y = deformation_to_transformation(dx, dy)
+
+        # The following command converts the maps to compact fixed point representation
+        # this leads to a ~20% increase in speed but could lead to accuracy losses
+        # Can be uncommented
+        map_x, map_y = cv2.convertMaps(map_x, map_y, dstmap1type=cv2.CV_16SC2)
+
+        # print('DEBUG')
+        # print(np.min(im))
+
+        return cv2.remap(im, map_x, map_y, interpolation=interp, borderMode=cv2.BORDER_REFLECT) #borderValue=float(np.min(im)))
+
+
+    def dense_image_warp_as_onehot(im, dx, dy, nlabels, interp=cv2.INTER_LINEAR):
+
+        # map_x, map_y = deformation_to_transformation(dx, dy)
+
+        # # The following command converts the maps to compact fixed point representation
+        # # this leads to a ~20% increase in speed but could lead to accuracy losses
+        # # Can be uncommented
+        # map_x, map_y = cv2.convertMaps(map_x, map_y, dstmap1type=cv2.CV_16SC2)
+        #
+        # onehot_output = cv2.remap(convert_to_onehot(im, nlabels=nlabels), map_x, map_y, interpolation=interp)
+
+        onehot_output = dense_image_warp(convert_to_onehot(im, nlabels), dx, dy, interp)
+
+        return np.argmax(onehot_output, axis=-1)
+
+
+def convert_to_onehot(lblmap, nlabels):
+
+    output = np.zeros((lblmap.shape[0], lblmap.shape[1], nlabels))
+    for ii in range(nlabels):
+        output[:,:,ii] = (lblmap == ii).astype(np.uint8)
+    return output
 
 def ncc(a,v, zero_norm=True):
 

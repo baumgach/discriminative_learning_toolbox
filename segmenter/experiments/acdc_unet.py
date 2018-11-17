@@ -3,7 +3,7 @@ import tensorflow as tf
 import os
 import config.system as sys_config
 
-experiment_name = 'acdc_unet_yes_aug_plus_elastic'
+experiment_name = 'acdc_unet_yes_aug_plus_elastic_onehot_every2nd_reflectborder'
 
 # Model settings
 network = nets2D.unet2D
