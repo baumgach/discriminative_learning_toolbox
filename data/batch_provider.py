@@ -131,6 +131,13 @@ class BatchProvider():
             augment_every_nth = get_option('augment_every_nth', 2)  # 2 means augment half of the images
                                                                     # 1 means augment every image
 
+            if do_rotations or do_scaleaug or do_elasticaug:
+                nlabels = get_option('nlabels', None)
+                if not nlabels:
+                    raise AssertionError("When doing augmentations with rotations, scaling, or elastic transformations "
+                                         "the parameter 'nlabels' must be provided.")
+
+
             new_images = []
             new_labels = []
             num_images = images.shape[0]
@@ -150,7 +157,11 @@ class BatchProvider():
                         random_angle = np.random.uniform(-angles, angles)
                         img = utils.rotate_image(img, random_angle)
                         if augment_labels:
-                            lbl = utils.rotate_image(lbl, random_angle, interp=cv2.INTER_NEAREST)
+
+
+
+                            lbl = utils.rotate_image_as_onehot(lbl, random_angle, nlabels=nlabels)
+
 
                     # RANDOM CROP SCALE
                     if do_scaleaug:
@@ -163,11 +174,13 @@ class BatchProvider():
 
                         img = utils.resize_image(img[p_y:(p_y + r_y), p_x:(p_x + r_y)], (n_x, n_y))
                         if augment_labels:
-                            lbl = utils.resize_image(lbl[p_y:(p_y + r_y), p_x:(p_x + r_y)], (n_x, n_y), interp=cv2.INTER_NEAREST)
+                            lbl = utils.resize_image_as_onehot(lbl[p_y:(p_y + r_y), p_x:(p_x + r_y)], (n_x, n_y), nlabels=nlabels)
 
 
                     # RANDOM ELASTIC DEFOMRATIONS (like in U-NET)
+
                     if do_elasticaug:
+
 
                         mu = 0
                         sigma = 10
@@ -181,20 +194,23 @@ class BatchProvider():
                         dy_mat = np.reshape(dy, (3, 3))
                         dy_img = utils.resize_image(dy_mat, (n_x, n_y), interp=cv2.INTER_CUBIC)
 
-                        grid_x, grid_y = np.meshgrid(np.arange(n_x), np.arange(n_y))
+                        # grid_x, grid_y = np.meshgrid(np.arange(n_x), np.arange(n_y))
+                        #
+                        # map_x = (grid_x + dx_img).astype(np.float32)
+                        # map_y = (grid_y + dy_img).astype(np.float32)
+                        #
+                        # # The following command converts the maps to compact fixed point representation
+                        # # this leads to a ~20% increase in speed but could lead to accuracy losses
+                        # # Can be uncommented
+                        # map_x, map_y = cv2.convertMaps(map_x, map_y, dstmap1type=cv2.CV_16SC2)
+                        #
+                        # img = cv2.remap(img, map_x, map_y, interpolation=cv2.INTER_LINEAR)
 
-                        map_x = (grid_x + dx_img).astype(np.float32)
-                        map_y = (grid_y + dy_img).astype(np.float32)
+                        img = utils.dense_image_warp(img, dx_img, dy_img)
 
-                        # The following command converts the maps to compact fixed point representation
-                        # this leads to a ~20% increase in speed but could lead to accuracy losses
-                        # Can be uncommented
-                        map_x, map_y = cv2.convertMaps(map_x, map_y, dstmap1type=cv2.CV_16SC2)
-
-                        img = cv2.remap(img, map_x, map_y, interpolation=cv2.INTER_LINEAR)
                         if augment_labels:
-                            lbl = cv2.remap(lbl, map_x, map_y, interpolation=cv2.INTER_LINEAR)
-                            # lbl = cv2.remap(lbl, map_x, map_y, interpolation=cv2.INTER_NEAREST)
+                            # lbl = cv2.remap(lbl, map_x, map_y, interpolation=cv2.INTER_LINEAR)
+                            lbl = utils.dense_image_warp_as_onehot(lbl, dx_img, dy_img, nlabels=nlabels)
 
 
                 # RANDOM FLIP
