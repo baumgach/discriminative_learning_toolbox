@@ -156,12 +156,13 @@ class BatchProvider():
                         angles = get_option('rot_degrees', 10.0)
                         random_angle = np.random.uniform(-angles, angles)
                         img = utils.rotate_image(img, random_angle)
+
                         if augment_labels:
-
-
-
-                            lbl = utils.rotate_image_as_onehot(lbl, random_angle, nlabels=nlabels)
-
+                            if nlabels <= 4:
+                                lbl = utils.rotate_image_as_onehot(lbl, random_angle, nlabels=nlabels)
+                            else:
+                                # If there are more than 4 labels open CV can no longer handle one-hot interpolation
+                                lbl = utils.rotate_image(lbl, random_angle)
 
                     # RANDOM CROP SCALE
                     if do_scaleaug:
@@ -174,13 +175,13 @@ class BatchProvider():
 
                         img = utils.resize_image(img[p_y:(p_y + r_y), p_x:(p_x + r_y)], (n_x, n_y))
                         if augment_labels:
-                            lbl = utils.resize_image_as_onehot(lbl[p_y:(p_y + r_y), p_x:(p_x + r_y)], (n_x, n_y), nlabels=nlabels)
-
+                            if nlabels <= 4:
+                                lbl = utils.resize_image_as_onehot(lbl[p_y:(p_y + r_y), p_x:(p_x + r_y)], (n_x, n_y), nlabels=nlabels)
+                            else:
+                                lbl = utils.resize_image(lbl[p_y:(p_y + r_y), p_x:(p_x + r_y)], (n_x, n_y))
 
                     # RANDOM ELASTIC DEFOMRATIONS (like in U-NET)
-
                     if do_elasticaug:
-
 
                         mu = 0
                         sigma = 10
@@ -194,23 +195,14 @@ class BatchProvider():
                         dy_mat = np.reshape(dy, (3, 3))
                         dy_img = utils.resize_image(dy_mat, (n_x, n_y), interp=cv2.INTER_CUBIC)
 
-                        # grid_x, grid_y = np.meshgrid(np.arange(n_x), np.arange(n_y))
-                        #
-                        # map_x = (grid_x + dx_img).astype(np.float32)
-                        # map_y = (grid_y + dy_img).astype(np.float32)
-                        #
-                        # # The following command converts the maps to compact fixed point representation
-                        # # this leads to a ~20% increase in speed but could lead to accuracy losses
-                        # # Can be uncommented
-                        # map_x, map_y = cv2.convertMaps(map_x, map_y, dstmap1type=cv2.CV_16SC2)
-                        #
-                        # img = cv2.remap(img, map_x, map_y, interpolation=cv2.INTER_LINEAR)
-
                         img = utils.dense_image_warp(img, dx_img, dy_img)
 
                         if augment_labels:
-                            # lbl = cv2.remap(lbl, map_x, map_y, interpolation=cv2.INTER_LINEAR)
-                            lbl = utils.dense_image_warp_as_onehot(lbl, dx_img, dy_img, nlabels=nlabels)
+
+                            if nlabels <= 4:
+                                lbl = utils.dense_image_warp_as_onehot(lbl, dx_img, dy_img, nlabels=nlabels)
+                            else:
+                                lbl = utils.dense_image_warp(lbl, dx_img, dy_img)
 
 
                 # RANDOM FLIP

@@ -44,7 +44,7 @@ class acdc_data():
 
         # Create the batch providers
         self.train = BatchProvider(images_train, labels_train, train_indices,
-                                   do_augmentations=True,
+                                   do_augmentations=False,
                                    augmentation_options={'do_rotations': True,
                                                          'augment_every_nth': 2,
                                                          'nlabels': 4,

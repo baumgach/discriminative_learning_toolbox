@@ -31,7 +31,7 @@ def main(model_path, exp_config, do_plots=False):
 
     # Make and restore vagan model
     segmenter_model = segmenter(exp_config=exp_config, data=data, fixed_batch_size=1)  # CRF model requires fixed batch size
-    segmenter_model.load_weights(model_path, type='best_xent')
+    segmenter_model.load_weights(model_path, type='best_dice')
 
     # Run predictions in an endless loop
     dice_list = []
@@ -101,6 +101,7 @@ def main(model_path, exp_config, do_plots=False):
     logging.info(structures_dict)
     logging.info(mean_per_lbl_dice)
     logging.info(np.mean(mean_per_lbl_dice))
+    logging.info('foreground mean: %f' % (np.mean(mean_per_lbl_dice[1:])))
     logging.info('ASSD')
     logging.info(structures_dict)
     logging.info(mean_per_lbl_assd)
