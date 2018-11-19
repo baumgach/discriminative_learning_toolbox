@@ -47,7 +47,7 @@ class acdc_data():
                                    do_augmentations=False,
                                    augmentation_options={'do_rotations': True,
                                                          'augment_every_nth': 2,
-                                                         'nlabels': 4,
+                                                         'nlabels': exp_config.nlabels,
                                                          'do_scaleaug': True,
                                                          'do_fliplr': True,
                                                          'do_flipup': True,
