@@ -582,7 +582,7 @@ def crop_and_concat(inputs, axis=-1):
 
         concat_inputs.append(cropped_tensor)
 
-        return tf.concat(concat_inputs, axis=axis)
+    return tf.concat(concat_inputs, axis=axis)
 
 
 def pad_to_size(bottom, output_size):
