@@ -162,7 +162,7 @@ class BatchProvider():
                                 lbl = utils.rotate_image_as_onehot(lbl, random_angle, nlabels=nlabels)
                             else:
                                 # If there are more than 4 labels open CV can no longer handle one-hot interpolation
-                                lbl = utils.rotate_image(lbl, random_angle)
+                                lbl = utils.rotate_image(lbl, random_angle, interp=cv2.INTER_NEAREST)
 
                     # RANDOM CROP SCALE
                     if do_scaleaug:
@@ -178,7 +178,7 @@ class BatchProvider():
                             if nlabels <= 4:
                                 lbl = utils.resize_image_as_onehot(lbl[p_y:(p_y + r_y), p_x:(p_x + r_y)], (n_x, n_y), nlabels=nlabels)
                             else:
-                                lbl = utils.resize_image(lbl[p_y:(p_y + r_y), p_x:(p_x + r_y)], (n_x, n_y))
+                                lbl = utils.resize_image(lbl[p_y:(p_y + r_y), p_x:(p_x + r_y)], (n_x, n_y), interp=cv2.INTER_NEAREST)
 
                     # RANDOM ELASTIC DEFOMRATIONS (like in U-NET)
                     if do_elasticaug:
@@ -202,7 +202,7 @@ class BatchProvider():
                             if nlabels <= 4:
                                 lbl = utils.dense_image_warp_as_onehot(lbl, dx_img, dy_img, nlabels=nlabels)
                             else:
-                                lbl = utils.dense_image_warp(lbl, dx_img, dy_img)
+                                lbl = utils.dense_image_warp(lbl, dx_img, dy_img, interp=cv2.INTER_NEAREST, do_optimisation=False)
 
 
                 # RANDOM FLIP

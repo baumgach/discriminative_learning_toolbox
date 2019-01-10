@@ -49,7 +49,8 @@ class segmenter:
         self.l_pl_ = exp_config.network(self.x_pl,
                                         nlabels=self.nlabels,
                                         training=self.training_pl,
-                                        n0=self.exp_config.n0)
+                                        n0=self.exp_config.n0,
+                                        norm=exp_config.normalisation)
         self.y_pl_ = tf.nn.softmax(self.l_pl_)
         self.p_pl_ = tf.cast(tf.argmax(self.y_pl_, axis=-1), tf.int32)
 

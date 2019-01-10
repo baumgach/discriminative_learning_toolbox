@@ -2,20 +2,22 @@ from segmenter.network_zoo import nets2D
 import tensorflow as tf
 import os
 import config.system as sys_config
+from tfwrapper import normalisation
 
-experiment_name = 'nci_prostate_unet'
+experiment_name = 'acdc_unet_groupnorm_G32'
 
 # Model settings
 network = nets2D.unet2D
+normalisation = normalisation.group_norm2D
 
 # Data settings
-data_identifier = 'nci_prostate'
-preproc_folder = os.path.join(sys_config.project_root, 'data/preproc_data/nci_prostate')
-data_root = '/usr/bmicnas01/data-biwi-01/bmicdatasets-originals/Originals/Challenge_Datasets/NCI_Prostate'
+data_identifier = 'acdc'
+preproc_folder = os.path.join(sys_config.project_root, 'data/preproc_data/acdc')
+data_root = '/scratch_net/bmicdl03/data/ACDC_challenge_20170617'
 dimensionality_mode = '2D'
 image_size = (256, 256)
-target_resolution = (0.625, 0.625)
-nlabels = 3
+target_resolution = (1.36719, 1.36719)
+nlabels = 4
 
 # Network settings
 n0 = 32
@@ -25,9 +27,9 @@ weight_decay = 0.0
 loss_type = 'crossentropy'  # 'dice_micro'/'dice_macro'/'dice_macro_robust'/'crossentropy'
 
 # Training settings
-batch_size = 12
+batch_size = 10
 n_accum_grads = 1
-learning_rate = 1e-2
+learning_rate = 1e-3
 optimizer_handle = tf.train.AdamOptimizer
 beta1=0.9
 beta2=0.999

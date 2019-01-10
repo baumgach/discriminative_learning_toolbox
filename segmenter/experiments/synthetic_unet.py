@@ -38,6 +38,9 @@ divide_lr_frequency = None
 warmup_training = False
 momentum = None
 
+do_augmentations = False
+augmentation_options = { }
+
 # Rarely changed settings
 use_data_fraction = False  # Should normally be False
 max_iterations = 1000000

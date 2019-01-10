@@ -2,11 +2,13 @@ from segmenter.network_zoo import nets2D
 import tensorflow as tf
 import os
 import config.system as sys_config
+from tfwrapper import normalisation
 
-experiment_name = 'acdc_unet_yes_aug_plus_elastic_onehot_every2nd_stillworking'
+experiment_name = 'acdc_unet'
 
 # Model settings
 network = nets2D.unet2D
+normalisation = normalisation.batch_norm
 
 # Data settings
 data_identifier = 'acdc'
@@ -35,6 +37,15 @@ schedule_lr = False
 divide_lr_frequency = None
 warmup_training = False
 momentum = None
+
+# Augmentation
+do_augmentations = True
+augmentation_options = { 'do_rotations': True,
+                         'do_scaleaug': True,
+                         'do_fliplr': True,
+                         'do_flipud': True,
+                         'do_elasticaug': True,
+                         'augment_every_nth': 2}
 
 # Rarely changed settings
 use_data_fraction = False  # Should normally be False

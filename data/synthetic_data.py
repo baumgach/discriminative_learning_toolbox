@@ -82,8 +82,16 @@ class synthetic_data():
         val_c0_indices = val_indices[np.where(labels_val == 0)]
 
         # Create the batch providers
-        self.train_c1 = BatchProvider(images_train, labels_use_train, train_c1_indices)
-        self.train_c0 = BatchProvider(images_train, labels_use_train, train_c0_indices)
+
+        augmentation_options = exp_config.augmentation_options
+        augmentation_options['nlabels'] = exp_config.nlabels
+
+        self.train_c1 = BatchProvider(images_train, labels_use_train, train_c1_indices,
+                                      do_augmentations=exp_config.do_augmentations,
+                                      augmentation_options=augmentation_options)
+        self.train_c0 = BatchProvider(images_train, labels_use_train, train_c0_indices,
+                                      do_augmentations=exp_config.do_augmentations,
+                                      augmentation_options=augmentation_options)
 
         self.validation_c1 = BatchProvider(images_val, labels_use_val, val_c1_indices)
         self.validation_c0 = BatchProvider(images_val, labels_use_val, val_c0_indices)
@@ -91,7 +99,10 @@ class synthetic_data():
         self.test_c1 = BatchProvider(images_test, labels_use_test, test_c1_indices)
         self.test_c0 = BatchProvider(images_test, labels_use_test, test_c0_indices)
 
-        self.train = BatchProvider(images_train, labels_use_train, train_indices)
+
+        self.train = BatchProvider(images_train, labels_train, train_indices,
+                                   do_augmentations=exp_config.do_augmentations,
+                                   augmentation_options=augmentation_options)
         self.validation = BatchProvider(images_val, labels_use_val, val_indices)
         self.test = BatchProvider(images_test, labels_use_test, test_indices)
 

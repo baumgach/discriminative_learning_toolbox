@@ -47,34 +47,21 @@ else:
 
         return map_x, map_y
 
-    def dense_image_warp(im, dx, dy, interp=cv2.INTER_LINEAR):
+    def dense_image_warp(im, dx, dy, interp=cv2.INTER_LINEAR, do_optimisation=True):
 
         map_x, map_y = deformation_to_transformation(dx, dy)
 
         # The following command converts the maps to compact fixed point representation
         # this leads to a ~20% increase in speed but could lead to accuracy losses
         # Can be uncommented
-        map_x, map_y = cv2.convertMaps(map_x, map_y, dstmap1type=cv2.CV_16SC2)
-
-        # print('DEBUG')
-        # print(np.min(im))
-
+        if do_optimisation:
+            map_x, map_y = cv2.convertMaps(map_x, map_y, dstmap1type=cv2.CV_16SC2)
         return cv2.remap(im, map_x, map_y, interpolation=interp, borderMode=cv2.BORDER_REFLECT) #borderValue=float(np.min(im)))
 
 
-    def dense_image_warp_as_onehot(im, dx, dy, nlabels, interp=cv2.INTER_LINEAR):
+    def dense_image_warp_as_onehot(im, dx, dy, nlabels, interp=cv2.INTER_LINEAR, do_optimisation=True):
 
-        # map_x, map_y = deformation_to_transformation(dx, dy)
-
-        # # The following command converts the maps to compact fixed point representation
-        # # this leads to a ~20% increase in speed but could lead to accuracy losses
-        # # Can be uncommented
-        # map_x, map_y = cv2.convertMaps(map_x, map_y, dstmap1type=cv2.CV_16SC2)
-        #
-        # onehot_output = cv2.remap(convert_to_onehot(im, nlabels=nlabels), map_x, map_y, interpolation=interp)
-
-        onehot_output = dense_image_warp(convert_to_onehot(im, nlabels), dx, dy, interp)
-
+        onehot_output = dense_image_warp(convert_to_onehot(im, nlabels), dx, dy, interp, do_optimisation=do_optimisation)
         return np.argmax(onehot_output, axis=-1)
 
 

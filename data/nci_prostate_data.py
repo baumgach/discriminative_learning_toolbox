@@ -43,6 +43,10 @@ class nci_prostate_data():
         val_indices = np.arange(N_val)
 
         # Create the batch providers
-        self.train = BatchProvider(images_train, labels_train, train_indices)
+        augmentation_options = exp_config.augmentation_options
+        augmentation_options['nlabels'] = exp_config.nlabels
+        self.train = BatchProvider(images_train, labels_train, train_indices,
+                                   do_augmentations=exp_config.do_augmentations,
+                                   augmentation_options=augmentation_options)
         self.validation = BatchProvider(images_val, labels_val, val_indices)
         self.test = BatchProvider(images_test, labels_test, test_indices)

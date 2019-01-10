@@ -36,6 +36,15 @@ divide_lr_frequency = None
 warmup_training = False
 momentum = None
 
+# Augmentation
+do_augmentations = True
+augmentation_options = { 'do_rotations': True,
+                         'do_scaleaug': True,
+                         'do_fliplr': True,
+                         'do_flipud': True,
+                         'do_elasticaug': True,
+                         'augment_every_nth': 2}
+
 # Rarely changed settings
 use_data_fraction = False  # Should normally be False
 max_iterations = 1000000

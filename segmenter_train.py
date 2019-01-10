@@ -8,9 +8,9 @@ def main():
 
     # Select experiment below
     # from segmenter.experiments import synthetic_unet as exp_config
-    from segmenter.experiments import acdc_unet as exp_config
     # from segmenter.experiments import acdc_resunet as exp_config
     # from segmenter.experiments import acdc_unet3D as exp_config
+    from segmenter.experiments import acdc_unet as exp_config
     # from segmenter.experiments import nci_prostate_unet as exp_config
     # from segmenter.experiments import nci_prostate_unet3D as exp_config
 
