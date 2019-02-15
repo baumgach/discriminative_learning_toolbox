@@ -34,6 +34,7 @@ Contributions by:
  - Yigit Baran Can (code for CRF-RNN layer)
  - Lisa Koch (code for ACDC evaluation)
  - Firat Ozdemir (code for summing over batches in Dice calculation)
+ - Robin Brügger (help with elastic data augmentation)
 
 ## Requirements 
 

@@ -40,7 +40,8 @@ else:
 
         nx, ny = dx.shape
 
-        grid_x, grid_y = np.meshgrid(np.arange(nx), np.arange(ny))
+        # grid_x, grid_y = np.meshgrid(np.arange(nx), np.arange(ny))
+        grid_y, grid_x = np.meshgrid(np.arange(nx), np.arange(ny), indexing="ij")  # Robin's change to make it work with non-square images
 
         map_x = (grid_x + dx).astype(np.float32)
         map_y = (grid_y + dy).astype(np.float32)

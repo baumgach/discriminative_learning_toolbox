@@ -83,7 +83,7 @@ class BatchProvider():
             X_batch, y_batch = self._augmentation_function(X_batch, y_batch)
 
         if self.normalise_images:
-            utils.normalise_images(X_batch)
+            X_batch = utils.normalise_images(X_batch)
 
         if self.map_to_unity_range:
             X_batch = utils.map_images_to_intensity_range(X_batch, -1, 1, percentiles=0.95)
